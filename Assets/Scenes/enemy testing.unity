@@ -504,19 +504,19 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.3722177
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: 0.92814547
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -524,7 +524,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
+      value: 136.295
       objectReference: {fileID: 0}
     - target: {fileID: 4766515620777377606, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
@@ -535,6 +535,10 @@ PrefabInstance:
       value: BossTestSid
       objectReference: {fileID: 0}
     - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
+      propertyPath: laserSpeed
+      value: 10
+      objectReference: {fileID: 0}
+    - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: cooldownTime
       value: 3
       objectReference: {fileID: 0}
@@ -542,6 +546,10 @@ PrefabInstance:
       propertyPath: playerTransform
       value: 
       objectReference: {fileID: 780881156}
+    - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
+      propertyPath: startingCooldown
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

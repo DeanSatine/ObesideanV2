@@ -164,7 +164,7 @@ namespace Boss_Enemy
         }
         
         [SerializeField]
-        private float laserSpeed = 0.5f;
+        private float laserSpeed = 20f;
 
         private Quaternion destinationRotation;
 
@@ -175,16 +175,16 @@ namespace Boss_Enemy
                 Debug.Log("Laser started");
                 destinationRotation = Quaternion.Euler(
                     0,
-                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y + 45,
+                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y - 45,
                     0
                     );
-                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y - 45, 0);
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + 45, 0);
                 moveJustStarted = false;
             }
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
             
-            if (Mathf.Approximately(Mathf.Floor(transform.rotation.eulerAngles.y), Mathf.Floor(destinationRotation.eulerAngles.y)))
+            if (Mathf.RoundToInt(transform.rotation.eulerAngles.y) == Mathf.RoundToInt(destinationRotation.eulerAngles.y))
             {
                 canAttack = false;
                 Debug.Log("Laser ended");
@@ -199,16 +199,16 @@ namespace Boss_Enemy
                 Debug.Log("Laser2 started");
                 destinationRotation = Quaternion.Euler(
                     0,
-                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y + 90,
+                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y - 90,
                     0
                 );
-                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y - 90, 0);
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + 90, 0);
                 moveJustStarted = false;
             }
 
-            transform.rotation = Quaternion.Slerp(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
+            transform.rotation = Quaternion.RotateTowards(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
             
-            if (Mathf.Approximately(Mathf.Floor(transform.rotation.eulerAngles.y), Mathf.Floor(destinationRotation.eulerAngles.y)))
+            if (Mathf.RoundToInt(transform.rotation.eulerAngles.y) == Mathf.RoundToInt(destinationRotation.eulerAngles.y))
             {
                 canAttack = false;
                 Debug.Log("Laser2 ended");
