@@ -218,7 +218,7 @@ namespace Boss_Enemy
 
         private void Roll()
         {
-            JumpSlam();
+            JumpSlam(); // idk how to add this yet
         }
 
         #endregion
@@ -267,7 +267,7 @@ namespace Boss_Enemy
                     Roll();
                     break;
                 default:
-                    Debug.Log($"{currentMoveType} Move not recognized!");
+                    Debug.LogError($"Move {currentMoveType} not recognized!");
                     break;
             }
             
