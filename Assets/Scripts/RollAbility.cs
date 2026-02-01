@@ -8,12 +8,21 @@ public class RollAbility : MonoBehaviour
     [SerializeField] private float rollDamage = 800f;
     [SerializeField] private float damageRadius = 5f;
 
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem rollTrailVFX;
+    [SerializeField] private ParticleSystem impactVFX;
+
     private bool isRolling;
 
     public IEnumerator Execute(PlayerController controller)
     {
         controller.SetAbilityState(true);
         isRolling = true;
+
+        if (rollTrailVFX != null)
+        {
+            rollTrailVFX.Play();
+        }
 
         Vector3 rollDirection = transform.forward;
         float rollSpeed = rollDistance / rollDuration;
@@ -45,6 +54,12 @@ public class RollAbility : MonoBehaviour
 
         rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
         rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+        if (rollTrailVFX != null)
+        {
+            rollTrailVFX.Stop();
+        }
+
         isRolling = false;
         controller.SetAbilityState(false);
     }
@@ -52,6 +67,12 @@ public class RollAbility : MonoBehaviour
     public void TriggerDamage()
     {
         if (!isRolling) return;
+
+        if (impactVFX != null)
+        {
+            impactVFX.transform.position = transform.position;
+            impactVFX.Play();
+        }
 
         Collider[] hits = Physics.OverlapSphere(transform.position, damageRadius);
         foreach (Collider hit in hits)
@@ -70,6 +91,13 @@ public class RollAbility : MonoBehaviour
                 {
                     Vector3 force = (hit.transform.position - transform.position).normalized * rollDamage;
                     hitRb.AddForce(force, ForceMode.Impulse);
+                }
+
+                NPCController npc = hit.GetComponent<NPCController>();
+                if (npc != null)
+                {
+                    Vector3 direction = (hit.transform.position - transform.position).normalized;
+                    npc.Die(direction * rollDamage);
                 }
             }
         }

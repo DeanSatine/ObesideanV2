@@ -270,27 +270,21 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        KeepPlayerUpright();
-        
         if (!isPerformingAbility)
         {
+            KeepPlayerUpright();
             HandleMovement();
         }
     }
 
     private void KeepPlayerUpright()
     {
-        Vector3 currentUp = transform.up;
-        Vector3 targetUp = Vector3.up;
+        Quaternion currentRotation = transform.rotation;
+        Vector3 currentEuler = currentRotation.eulerAngles;
         
-        if (Vector3.Dot(currentUp, targetUp) < 0.99f)
-        {
-            Vector3 axis = Vector3.Cross(currentUp, targetUp);
-            float angle = Vector3.Angle(currentUp, targetUp);
-            
-            Quaternion correction = Quaternion.AngleAxis(angle * 10f * Time.fixedDeltaTime, axis);
-            transform.rotation = correction * transform.rotation;
-        }
+        Quaternion targetRotation = Quaternion.Euler(0f, currentEuler.y, 0f);
+        
+        transform.rotation = Quaternion.Slerp(currentRotation, targetRotation, 10f * Time.fixedDeltaTime);
     }
 
     private void HandleMovement()

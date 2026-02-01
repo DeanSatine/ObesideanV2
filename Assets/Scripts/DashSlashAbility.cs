@@ -8,11 +8,20 @@ public class DashSlashAbility : MonoBehaviour
     [SerializeField] private float slashRadius = 8f;
     [SerializeField] private float slashDamage = 1000f;
 
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem dashTrailVFX;
+    [SerializeField] private ParticleSystem slashVFX;
+
     private bool shouldTriggerOnAnimation = true;
 
     public IEnumerator Execute(PlayerController controller)
     {
         controller.SetAbilityState(true);
+
+        if (dashTrailVFX != null)
+        {
+            dashTrailVFX.Play();
+        }
 
         Vector3 dashDirection = transform.forward;
         float dashSpeed = dashDistance / dashDuration;
@@ -43,6 +52,11 @@ public class DashSlashAbility : MonoBehaviour
         rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
         rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
+        if (dashTrailVFX != null)
+        {
+            dashTrailVFX.Stop();
+        }
+
         if (!shouldTriggerOnAnimation)
         {
             TriggerDamage();
@@ -53,6 +67,12 @@ public class DashSlashAbility : MonoBehaviour
 
     public void TriggerDamage()
     {
+        if (slashVFX != null)
+        {
+            slashVFX.transform.position = transform.position;
+            slashVFX.Play();
+        }
+
         Collider[] hits = Physics.OverlapSphere(transform.position, slashRadius);
         foreach (Collider hit in hits)
         {
@@ -70,6 +90,13 @@ public class DashSlashAbility : MonoBehaviour
                 {
                     Vector3 force = (hit.transform.position - transform.position).normalized * slashDamage;
                     hitRb.AddForce(force, ForceMode.Impulse);
+                }
+
+                NPCController npc = hit.GetComponent<NPCController>();
+                if (npc != null)
+                {
+                    Vector3 direction = (hit.transform.position - transform.position).normalized;
+                    npc.Die(direction * slashDamage);
                 }
             }
         }

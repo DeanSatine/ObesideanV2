@@ -8,6 +8,9 @@ public class ChompAbility : MonoBehaviour
     [SerializeField] private float chompInterval = 0.5f;
     [SerializeField] private Transform mouthPosition;
 
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem chompVFX;
+
     private float nextChompTime;
 
     public IEnumerator Execute(PlayerController controller)
@@ -29,6 +32,12 @@ public class ChompAbility : MonoBehaviour
     {
         Vector3 chompCenter = mouthPosition != null ? mouthPosition.position : transform.position + transform.forward * 2f;
         
+        if (chompVFX != null)
+        {
+            chompVFX.transform.position = chompCenter;
+            chompVFX.Play();
+        }
+
         Collider[] hits = Physics.OverlapSphere(chompCenter, chompRadius);
         foreach (Collider hit in hits)
         {
@@ -47,6 +56,13 @@ public class ChompAbility : MonoBehaviour
                 {
                     Vector3 force = (hit.transform.position - chompCenter).normalized * damagePerChomp;
                     rb.AddForce(force, ForceMode.Impulse);
+                }
+
+                NPCController npc = hit.GetComponent<NPCController>();
+                if (npc != null)
+                {
+                    Vector3 direction = (hit.transform.position - chompCenter).normalized;
+                    npc.Die(direction * damagePerChomp);
                 }
             }
         }

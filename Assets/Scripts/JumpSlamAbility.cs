@@ -8,6 +8,11 @@ public class JumpSlamAbility : MonoBehaviour
     [SerializeField] private float jumpDuration = 0.8f;
     [SerializeField] private float shockwaveRadius = 12f;
     [SerializeField] private float shockwaveForce = 2000f;
+    [SerializeField] private float upwardForceMultiplier = 1.5f;
+
+    [Header("VFX")]
+    [SerializeField] private ParticleSystem landingVFX;
+    [SerializeField] private ParticleSystem shockwaveVFX;
 
     private bool shouldTriggerOnAnimation = true;
 
@@ -52,6 +57,18 @@ public class JumpSlamAbility : MonoBehaviour
 
     public void TriggerShockwave()
     {
+        if (landingVFX != null)
+        {
+            landingVFX.transform.position = transform.position;
+            landingVFX.Play();
+        }
+
+        if (shockwaveVFX != null)
+        {
+            shockwaveVFX.transform.position = transform.position;
+            shockwaveVFX.Play();
+        }
+
         Collider[] hits = Physics.OverlapSphere(transform.position, shockwaveRadius);
         foreach (Collider hit in hits)
         {
@@ -61,7 +78,7 @@ public class JumpSlamAbility : MonoBehaviour
                 if (building != null)
                 {
                     Vector3 direction = (hit.transform.position - transform.position).normalized;
-                    direction.y = 0.5f;
+                    direction.y = upwardForceMultiplier;
                     building.ApplyDamage(direction * shockwaveForce, hit.ClosestPoint(transform.position));
                 }
 
@@ -69,8 +86,16 @@ public class JumpSlamAbility : MonoBehaviour
                 if (hitRb != null)
                 {
                     Vector3 force = (hit.transform.position - transform.position).normalized;
-                    force.y = 0.5f;
+                    force.y = upwardForceMultiplier;
                     hitRb.AddForce(force * shockwaveForce, ForceMode.Impulse);
+                }
+
+                NPCController npc = hit.GetComponent<NPCController>();
+                if (npc != null)
+                {
+                    Vector3 direction = (hit.transform.position - transform.position).normalized;
+                    direction.y = upwardForceMultiplier;
+                    npc.Die(direction * shockwaveForce);
                 }
             }
         }
