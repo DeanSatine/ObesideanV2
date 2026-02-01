@@ -308,6 +308,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!4 &780881156 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 6511396859846406272, guid: f564d89ee2b295e478b0ef5558c3db62, type: 3}
+  m_PrefabInstance: {fileID: 2076513459}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1885091496
 GameObject:
   m_ObjectHideFlags: 0
@@ -529,6 +534,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: BossTestSid
       objectReference: {fileID: 0}
+    - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
+      propertyPath: cooldownTime
+      value: 3
+      objectReference: {fileID: 0}
+    - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
+      propertyPath: playerTransform
+      value: 
+      objectReference: {fileID: 780881156}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

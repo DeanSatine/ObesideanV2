@@ -40,8 +40,9 @@ namespace Boss_Enemy
         private float startingCooldown = 10;
         [SerializeField]
         private float cooldownTime = 10;
-        private bool canAttack = false;
-        private bool started = false;
+        private bool canAttack;
+        private bool started;
+        private bool moveJustStarted;
 
         IEnumerator StartPhase3CoolDown()
         {
@@ -49,6 +50,7 @@ namespace Boss_Enemy
             ShowMoveHint();
             yield return new WaitForSeconds(cooldownTime);
             canAttack = true;
+            moveJustStarted = true;
             HideMoveHint();
         }
 
@@ -58,6 +60,7 @@ namespace Boss_Enemy
             ShowMoveHint();
             yield return new WaitForSeconds(startingCooldown);
             canAttack = true;
+            moveJustStarted = true;
             HideMoveHint();
         }
 
@@ -75,7 +78,7 @@ namespace Boss_Enemy
 
         #region Health and Death Defininitions
 
-        private bool dead = false;
+        private bool dead;
         [SerializeField]
         private float maxHealth = 100;
         private float health;
@@ -90,39 +93,132 @@ namespace Boss_Enemy
 
         #region Moves Logic
 
+        [SerializeField]
+        private Transform playerTransform;
+        
+        private Vector3 capturedPlayerPosition;
+        [SerializeField]
+        private float dashSpeed = 60;
+
         private void DashSlash()
         {
-            canAttack = false;
-            Debug.Log("Dashing slash");
-            StartCoroutine(StartPhase3CoolDown());
+            if (moveJustStarted)
+            {
+                Debug.Log("Dashing slash started");
+                capturedPlayerPosition = playerTransform.position;
+                capturedPlayerPosition.y = transform.position.y;
+                moveJustStarted = false;
+            }
+            
+            transform.position = Vector3.MoveTowards(transform.position, capturedPlayerPosition, dashSpeed * Time.deltaTime);
+            
+            if (transform.position == capturedPlayerPosition)
+            {
+                canAttack = false;
+                StartCoroutine(StartPhase3CoolDown());
+                Debug.Log("Dashing slash ended!");
+            }
         }
+
+        [SerializeField]
+        private float jumpHeight = 10;
+        [SerializeField]
+        private float jumpSpeed = 40;
+
+        private int jumpPhase = 1; // 1 means it still needs to jump, 2 means it has to leap at the player
+        private Vector3 jumpDestination; 
 
         private void JumpSlam()
         {
-            canAttack = false;
-            Debug.Log("Jumping slam");
-            StartCoroutine(StartPhase3CoolDown());
+            if (moveJustStarted)
+            {
+                Debug.Log("Jump slam started");
+                capturedPlayerPosition = playerTransform.position;
+                capturedPlayerPosition.y = transform.position.y;
+                jumpDestination = new Vector3(transform.position.x, transform.position.y + jumpHeight, transform.position.z);
+                jumpPhase = 1;
+                moveJustStarted = false;
+            }
+
+            if (jumpPhase == 1)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, jumpDestination, jumpSpeed * Time.deltaTime);
+                
+                if (Mathf.Approximately(transform.position.y, jumpDestination.y))
+                {
+                    jumpDestination = capturedPlayerPosition;
+                    jumpPhase = 2;
+                }
+            } 
+            else if (jumpPhase == 2)
+            {
+                transform.position = Vector3.MoveTowards(transform.position, jumpDestination, dashSpeed * Time.deltaTime);
+                
+                if (transform.position == capturedPlayerPosition)
+                {
+                    canAttack = false;
+                    Debug.Log("Jumping slam ended");
+                    StartCoroutine(StartPhase3CoolDown());
+                }
+            }
+        }
+        
+        [SerializeField]
+        private float laserSpeed = 0.5f;
+
+        private Quaternion destinationRotation;
+
+        private void Laser() // 90 degree laser
+        {
+            if (moveJustStarted)
+            {
+                Debug.Log("Laser started");
+                destinationRotation = Quaternion.Euler(
+                    0,
+                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y + 45,
+                    0
+                    );
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y - 45, 0);
+                moveJustStarted = false;
+            }
+
+            transform.rotation = Quaternion.Slerp(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
+            
+            if (Mathf.Approximately(Mathf.Floor(transform.rotation.eulerAngles.y), Mathf.Floor(destinationRotation.eulerAngles.y)))
+            {
+                canAttack = false;
+                Debug.Log("Laser ended");
+                StartCoroutine(StartPhase3CoolDown());
+            }
         }
 
-        private void Laser()
+        private void Laser2() // 180 degree laser
         {
-            canAttack = false;
-            Debug.Log("Laser");
-            StartCoroutine(StartPhase3CoolDown());
-        }
+            if (moveJustStarted)
+            {
+                Debug.Log("Laser2 started");
+                destinationRotation = Quaternion.Euler(
+                    0,
+                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y + 90,
+                    0
+                );
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y - 90, 0);
+                moveJustStarted = false;
+            }
 
-        private void Laser2()
-        {
-            canAttack = false;
-            Debug.Log("Laser2");
-            StartCoroutine(StartPhase3CoolDown());
+            transform.rotation = Quaternion.Slerp(transform.rotation, destinationRotation, Time.deltaTime * laserSpeed);
+            
+            if (Mathf.Approximately(Mathf.Floor(transform.rotation.eulerAngles.y), Mathf.Floor(destinationRotation.eulerAngles.y)))
+            {
+                canAttack = false;
+                Debug.Log("Laser2 ended");
+                StartCoroutine(StartPhase3CoolDown());
+            }
         }
 
         private void Roll()
         {
-            canAttack = false;
-            Debug.Log("Roll");
-            StartCoroutine(StartPhase3CoolDown());
+            JumpSlam();
         }
 
         #endregion
@@ -146,7 +242,12 @@ namespace Boss_Enemy
                 return;
             }
 
-            if (!canAttack) return;
+            if (!canAttack)
+            {
+                transform.rotation = Quaternion.LookRotation(transform.position - playerTransform.position);
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y, 0);
+                return;
+            }
 
             switch (currentMoveType)
             {

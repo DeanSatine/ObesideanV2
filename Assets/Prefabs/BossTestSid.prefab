@@ -128,3 +128,8 @@ MonoBehaviour:
   startingCooldown: 10
   cooldownTime: 10
   maxHealth: 100
+  playerTransform: {fileID: 0}
+  dashSpeed: 60
+  jumpHeight: 10
+  jumpSpeed: 40
+  laserSpeed: 0.5
