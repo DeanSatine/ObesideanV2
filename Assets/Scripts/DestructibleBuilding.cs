@@ -2,65 +2,59 @@ using UnityEngine;
 
 public class DestructibleBuilding : MonoBehaviour
 {
-    [SerializeField] private float health = 1000f;
-    [SerializeField] private float destructionThreshold = 0f;
-    [SerializeField] private bool breakIntoChunks = true;
-    [SerializeField] private GameObject destroyedPrefab;
-
+    [Header("Physics Settings")]
+    [SerializeField] private float buildingMass = 500f;
+    [SerializeField] private float pushForce = 300f;
+    
+    private bool isKnockedDown = false;
     private Rigidbody rb;
-    private bool isDestroyed;
-    private float currentHealth;
 
-    private void Awake()
+    private void OnCollisionEnter(Collision collision)
     {
-        currentHealth = health;
+        if (isKnockedDown) return;
 
-        if (breakIntoChunks && rb == null)
+        PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+        if (player != null)
         {
-            rb = gameObject.AddComponent<Rigidbody>();
-            rb.mass = 500f;
-            rb.isKinematic = true;
+            KnockDownBuilding(collision);
         }
+    }
+
+    private void KnockDownBuilding(Collision collision)
+    {
+        isKnockedDown = true;
+
+        rb = gameObject.AddComponent<Rigidbody>();
+        rb.mass = buildingMass;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+
+        Vector3 pushDirection = (transform.position - collision.contacts[0].point).normalized;
+        pushDirection.y = 0.3f;
+
+        rb.AddForce(pushDirection * pushForce, ForceMode.Impulse);
+        
+        Vector3 randomTorque = new Vector3(
+            Random.Range(-pushForce * 0.5f, pushForce * 0.5f),
+            Random.Range(-pushForce * 0.3f, pushForce * 0.3f),
+            Random.Range(-pushForce * 0.5f, pushForce * 0.5f)
+        );
+        rb.AddTorque(randomTorque, ForceMode.Impulse);
     }
 
     public void ApplyDamage(Vector3 force, Vector3 hitPoint)
     {
-        if (isDestroyed) return;
+        if (isKnockedDown) return;
 
-        currentHealth -= force.magnitude;
+        isKnockedDown = true;
 
-        if (currentHealth <= destructionThreshold)
-        {
-            Destroy();
-        }
-        else if (rb != null)
-        {
-            if (rb.isKinematic && currentHealth < health * 0.5f)
-            {
-                rb.isKinematic = false;
-                BoxCollider boxCollider = gameObject.GetComponent<BoxCollider>();
-                if (boxCollider == null)
-                {
-                    boxCollider = gameObject.AddComponent<BoxCollider>();
-                }
-            }
+        rb = gameObject.AddComponent<Rigidbody>();
+        rb.mass = buildingMass;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
 
-            if (!rb.isKinematic)
-            {
-                rb.AddForceAtPosition(force, hitPoint, ForceMode.Impulse);
-            }
-        }
-    }
+        Vector3 pushDirection = (transform.position - hitPoint).normalized;
+        pushDirection.y = 0.3f;
 
-    private void Destroy()
-    {
-        isDestroyed = true;
-
-        if (destroyedPrefab != null)
-        {
-            Instantiate(destroyedPrefab, transform.position, transform.rotation);
-        }
-
-        Destroy(gameObject);
+        rb.AddForce(force + pushDirection * pushForce, ForceMode.Impulse);
+        rb.AddTorque(Random.insideUnitSphere * pushForce, ForceMode.Impulse);
     }
 }

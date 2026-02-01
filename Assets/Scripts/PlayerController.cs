@@ -3,118 +3,326 @@ using UnityEngine.InputSystem;
 
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
+[RequireComponent(typeof(Animator))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 10f;
+    [SerializeField] private float acceleration = 5f;
+    [SerializeField] private float deceleration = 8f;
     [SerializeField] private float rotationSpeed = 720f;
     [SerializeField] private float knockdownForce = 500f;
+
+    [Header("Camera Settings")]
+    [SerializeField] private Transform cameraTransform;
+    [SerializeField] private float mouseSensitivity = 0.5f;
+    [SerializeField] private float cameraHeight = 8f;
+    [SerializeField] private CameraShake cameraShake;
 
     [Header("Ability Cooldowns")]
     [SerializeField] private float dashSlashCooldown = 3f;
     [SerializeField] private float jumpSlamCooldown = 5f;
-    [SerializeField] private float laserEyesCooldown = 8f;
+    [SerializeField] private float subwayBeamCooldown = 8f;
     [SerializeField] private float rollCooldown = 2f;
+    [SerializeField] private float chompCooldown = 1f;
+    [SerializeField] private float doubleJumpWindow = 0.3f;
 
     [Header("Ability References")]
     [SerializeField] private DashSlashAbility dashSlash;
     [SerializeField] private JumpSlamAbility jumpSlam;
-    [SerializeField] private LaserEyesAbility laserEyes;
+    [SerializeField] private SubwayBeamAbility subwayBeam;
     [SerializeField] private RollAbility roll;
+    [SerializeField] private ChompAbility chomp;
 
     private Rigidbody rb;
+    private Animator animator;
     private Vector2 moveInput;
+    private Vector2 mouseLookDelta;
+    private Vector3 currentVelocity;
     private bool isPerformingAbility;
 
     private float lastDashTime = -999f;
     private float lastJumpTime = -999f;
-    private float lastLaserTime = -999f;
+    private float lastSubwayBeamTime = -999f;
     private float lastRollTime = -999f;
+    private float lastChompTime = -999f;
+    private float firstJumpPressTime = -999f;
+    private int jumpPressCount;
+
+    private bool isLeftMousePressed;
+    private bool isRightMousePressed;
+    private float leftMouseHoldTime;
+
+    private float cameraPitch = 0f;
+
+    private InputAction moveAction;
+    private InputAction leftClickAction;
+    private InputAction rightClickAction;
+    private InputAction jumpAction;
+    private InputAction rollAction;
+    private InputAction mouseLookAction;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
         rb.constraints = RigidbodyConstraints.FreezeRotation;
-        rb.mass = 1000f;
+        rb.mass = 2000f;
+        rb.linearDamping = 1f;
+        rb.angularDamping = 2f;
+
+        animator = GetComponent<Animator>();
 
         dashSlash = GetComponent<DashSlashAbility>();
         jumpSlam = GetComponent<JumpSlamAbility>();
-        laserEyes = GetComponent<LaserEyesAbility>();
+        subwayBeam = GetComponent<SubwayBeamAbility>();
         roll = GetComponent<RollAbility>();
+        chomp = GetComponent<ChompAbility>();
+
+        SetupInputActions();
     }
 
-    public void OnMove(InputAction.CallbackContext context)
+    private void SetupInputActions()
     {
-        moveInput = context.ReadValue<Vector2>();
+        moveAction = new InputAction("Move", InputActionType.Value, "<Keyboard>/w");
+        moveAction.AddCompositeBinding("2DVector")
+            .With("Up", "<Keyboard>/w")
+            .With("Down", "<Keyboard>/s")
+            .With("Left", "<Keyboard>/a")
+            .With("Right", "<Keyboard>/d");
+        
+        mouseLookAction = new InputAction("MouseLook", InputActionType.Value);
+        mouseLookAction.AddBinding("<Mouse>/delta");
+        
+        leftClickAction = new InputAction("LeftClick", InputActionType.Button, "<Mouse>/leftButton");
+        rightClickAction = new InputAction("RightClick", InputActionType.Button, "<Mouse>/rightButton");
+        jumpAction = new InputAction("Jump", InputActionType.Button, "<Keyboard>/space");
+        rollAction = new InputAction("Roll", InputActionType.Button, "<Keyboard>/leftShift");
+
+        moveAction.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
+        moveAction.canceled += ctx => moveInput = Vector2.zero;
+
+        mouseLookAction.performed += ctx => mouseLookDelta = ctx.ReadValue<Vector2>();
+        mouseLookAction.canceled += ctx => mouseLookDelta = Vector2.zero;
+
+        leftClickAction.started += ctx => 
+        {
+            isLeftMousePressed = true;
+            leftMouseHoldTime = 0f;
+        };
+        leftClickAction.canceled += ctx => 
+        {
+            isLeftMousePressed = false;
+            if (leftMouseHoldTime < 0.5f && !isPerformingAbility)
+            {
+                TryDashSlash();
+            }
+            leftMouseHoldTime = 0f;
+        };
+
+        rightClickAction.started += ctx => isRightMousePressed = true;
+        rightClickAction.canceled += ctx => isRightMousePressed = false;
+
+        jumpAction.performed += ctx => 
+        {
+            if (Time.time - firstJumpPressTime <= doubleJumpWindow)
+            {
+                jumpPressCount++;
+                if (jumpPressCount >= 2)
+                {
+                    TryJumpSlam();
+                    jumpPressCount = 0;
+                    firstJumpPressTime = -999f;
+                }
+            }
+            else
+            {
+                jumpPressCount = 1;
+                firstJumpPressTime = Time.time;
+            }
+        };
+
+        rollAction.performed += ctx => 
+        {
+            if (Time.time - lastRollTime >= rollCooldown && !isPerformingAbility && roll != null)
+            {
+                lastRollTime = Time.time;
+                if (animator != null)
+                    animator.SetTrigger("Roll");
+                StartCoroutine(roll.Execute(this));
+            }
+        };
     }
 
-    public void OnDashSlash(InputAction.CallbackContext context)
+    private void OnEnable()
     {
-        if (context.performed && Time.time - lastDashTime >= dashSlashCooldown && !isPerformingAbility && dashSlash != null)
+        moveAction?.Enable();
+        mouseLookAction?.Enable();
+        leftClickAction?.Enable();
+        rightClickAction?.Enable();
+        jumpAction?.Enable();
+        rollAction?.Enable();
+        
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+    }
+
+    private void OnDisable()
+    {
+        moveAction?.Disable();
+        mouseLookAction?.Disable();
+        leftClickAction?.Disable();
+        rightClickAction?.Disable();
+        jumpAction?.Disable();
+        rollAction?.Disable();
+        
+        Cursor.lockState = CursorLockMode.None;
+        Cursor.visible = true;
+    }
+
+    private void TryDashSlash()
+    {
+        if (Time.time - lastDashTime >= dashSlashCooldown && !isPerformingAbility && dashSlash != null)
         {
             lastDashTime = Time.time;
+            if (animator != null)
+                animator.SetTrigger("DashSlash");
             StartCoroutine(dashSlash.Execute(this));
         }
     }
 
-    public void OnJumpSlam(InputAction.CallbackContext context)
+    private void TryJumpSlam()
     {
-        if (context.performed && Time.time - lastJumpTime >= jumpSlamCooldown && !isPerformingAbility && jumpSlam != null)
+        if (Time.time - lastJumpTime >= jumpSlamCooldown && !isPerformingAbility && jumpSlam != null)
         {
             lastJumpTime = Time.time;
+            if (animator != null)
+                animator.SetTrigger("JumpSlam");
             StartCoroutine(jumpSlam.Execute(this));
         }
     }
 
-    public void OnLaserEyes(InputAction.CallbackContext context)
+    private void TrySubwayBeam()
     {
-        if (context.performed && Time.time - lastLaserTime >= laserEyesCooldown && !isPerformingAbility && laserEyes != null)
+        if (Time.time - lastSubwayBeamTime >= subwayBeamCooldown && !isPerformingAbility && subwayBeam != null)
         {
-            lastLaserTime = Time.time;
-            StartCoroutine(laserEyes.Execute(this));
+            lastSubwayBeamTime = Time.time;
+            isLeftMousePressed = false;
+            isRightMousePressed = false;
+            if (animator != null)
+                animator.SetTrigger("SubwayBeam");
+            StartCoroutine(subwayBeam.Execute(this));
         }
     }
 
-    public void OnRoll(InputAction.CallbackContext context)
+    private void TryChomp()
     {
-        if (context.performed && Time.time - lastRollTime >= rollCooldown && !isPerformingAbility && roll != null)
+        if (Time.time - lastChompTime >= chompCooldown && chomp != null)
         {
-            lastRollTime = Time.time;
-            StartCoroutine(roll.Execute(this));
+            lastChompTime = Time.time;
+            if (animator != null)
+                animator.SetBool("IsChomping", true);
+            StartCoroutine(chomp.Execute(this));
+        }
+    }
+
+    private void Update()
+    {
+        HandleMouseLook();
+        
+        if (isLeftMousePressed && isRightMousePressed)
+        {
+            TrySubwayBeam();
+        }
+        else if (isLeftMousePressed)
+        {
+            leftMouseHoldTime += Time.deltaTime;
+            
+            if (leftMouseHoldTime >= 0.5f)
+            {
+                TryChomp();
+            }
+        }
+        else
+        {
+            if (animator != null)
+                animator.SetBool("IsChomping", false);
+        }
+        
+        if (animator != null)
+            animator.SetFloat("Speed", moveInput.magnitude);
+    }
+
+    private void HandleMouseLook()
+    {
+        float mouseX = mouseLookDelta.x * mouseSensitivity;
+        float mouseY = mouseLookDelta.y * mouseSensitivity;
+
+        transform.Rotate(Vector3.up * mouseX);
+
+        cameraPitch -= mouseY;
+        cameraPitch = Mathf.Clamp(cameraPitch, -80f, 80f);
+
+        if (cameraTransform != null)
+        {
+            cameraTransform.localRotation = Quaternion.Euler(cameraPitch, 0f, 0f);
         }
     }
 
     private void FixedUpdate()
     {
+        KeepPlayerUpright();
+        
         if (!isPerformingAbility)
         {
             HandleMovement();
         }
     }
 
+    private void KeepPlayerUpright()
+    {
+        Vector3 currentUp = transform.up;
+        Vector3 targetUp = Vector3.up;
+        
+        if (Vector3.Dot(currentUp, targetUp) < 0.99f)
+        {
+            Vector3 axis = Vector3.Cross(currentUp, targetUp);
+            float angle = Vector3.Angle(currentUp, targetUp);
+            
+            Quaternion correction = Quaternion.AngleAxis(angle * 10f * Time.fixedDeltaTime, axis);
+            transform.rotation = correction * transform.rotation;
+        }
+    }
+
     private void HandleMovement()
     {
-        Vector3 movement = new Vector3(moveInput.x, 0f, moveInput.y);
+        Vector3 forward = transform.forward;
+        Vector3 right = transform.right;
 
-        if (movement.magnitude > 0.1f)
+        Vector3 targetDirection = (forward * moveInput.y + right * moveInput.x).normalized;
+        Vector3 targetVelocity = targetDirection * moveSpeed;
+
+        if (targetDirection.magnitude > 0.1f)
         {
-            rb.linearVelocity = new Vector3(
-                movement.x * moveSpeed,
-                rb.linearVelocity.y,
-                movement.z * moveSpeed
-            );
-
-            Quaternion targetRotation = Quaternion.LookRotation(movement);
-            transform.rotation = Quaternion.RotateTowards(
-                transform.rotation,
-                targetRotation,
-                rotationSpeed * Time.fixedDeltaTime
+            currentVelocity = Vector3.Lerp(
+                currentVelocity,
+                targetVelocity,
+                acceleration * Time.fixedDeltaTime
             );
         }
         else
         {
-            rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+            currentVelocity = Vector3.Lerp(
+                currentVelocity,
+                Vector3.zero,
+                deceleration * Time.fixedDeltaTime
+            );
         }
+
+        rb.linearVelocity = new Vector3(
+            currentVelocity.x,
+            rb.linearVelocity.y,
+            currentVelocity.z
+        );
     }
 
     private void OnCollisionEnter(Collision collision)
@@ -129,7 +337,20 @@ public class PlayerController : MonoBehaviour
     public void SetAbilityState(bool performing)
     {
         isPerformingAbility = performing;
+        if (animator != null)
+        {
+            animator.SetBool("IsPerformingAbility", performing);
+        }
     }
 
     public Rigidbody GetRigidbody() => rb;
+
+    public void OnFootstep()
+    {
+        if (cameraShake != null)
+        {
+            cameraShake.ShakeFootstep();
+        }
+    }
+    public Animator GetAnimator() => animator;
 }

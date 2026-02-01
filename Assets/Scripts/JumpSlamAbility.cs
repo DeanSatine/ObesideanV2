@@ -8,7 +8,8 @@ public class JumpSlamAbility : MonoBehaviour
     [SerializeField] private float jumpDuration = 0.8f;
     [SerializeField] private float shockwaveRadius = 12f;
     [SerializeField] private float shockwaveForce = 2000f;
-    [SerializeField] private LayerMask damageLayer;
+
+    private bool shouldTriggerOnAnimation = true;
 
     public IEnumerator Execute(PlayerController controller)
     {
@@ -19,6 +20,8 @@ public class JumpSlamAbility : MonoBehaviour
         float elapsed = 0f;
 
         Rigidbody rb = controller.GetRigidbody();
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        rb.useGravity = false;
 
         while (elapsed < jumpDuration)
         {
@@ -26,14 +29,29 @@ public class JumpSlamAbility : MonoBehaviour
             float t = elapsed / jumpDuration;
 
             float height = Mathf.Sin(t * Mathf.PI) * jumpHeight;
-            Vector3 pos = Vector3.Lerp(startPos, targetPos, t);
-            pos.y = startPos.y + height;
+            Vector3 horizontalMovement = Vector3.Lerp(startPos, targetPos, t);
+            Vector3 targetPosition = new Vector3(horizontalMovement.x, startPos.y + height, horizontalMovement.z);
 
-            rb.MovePosition(pos);
+            Vector3 velocity = (targetPosition - transform.position) / Time.fixedDeltaTime;
+            rb.linearVelocity = velocity;
 
             yield return new WaitForFixedUpdate();
         }
 
+        rb.useGravity = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+        if (!shouldTriggerOnAnimation)
+        {
+            TriggerShockwave();
+        }
+
+        controller.SetAbilityState(false);
+    }
+
+    public void TriggerShockwave()
+    {
         Collider[] hits = Physics.OverlapSphere(transform.position, shockwaveRadius);
         foreach (Collider hit in hits)
         {
@@ -56,7 +74,5 @@ public class JumpSlamAbility : MonoBehaviour
                 }
             }
         }
-
-        controller.SetAbilityState(false);
     }
 }

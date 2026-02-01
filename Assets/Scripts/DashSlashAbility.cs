@@ -7,30 +7,52 @@ public class DashSlashAbility : MonoBehaviour
     [SerializeField] private float dashDuration = 0.3f;
     [SerializeField] private float slashRadius = 8f;
     [SerializeField] private float slashDamage = 1000f;
-    [SerializeField] private LayerMask damageLayer;
+
+    private bool shouldTriggerOnAnimation = true;
 
     public IEnumerator Execute(PlayerController controller)
     {
         controller.SetAbilityState(true);
 
-        Vector3 startPos = transform.position;
         Vector3 dashDirection = transform.forward;
-        Vector3 endPos = startPos + dashDirection * dashDistance;
+        float dashSpeed = dashDistance / dashDuration;
 
         float elapsed = 0f;
         Rigidbody rb = controller.GetRigidbody();
+        
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
         while (elapsed < dashDuration)
         {
             elapsed += Time.deltaTime;
-            float t = elapsed / dashDuration;
 
-            Vector3 newPos = Vector3.Lerp(startPos, endPos, t);
-            rb.MovePosition(newPos);
+            Vector3 desiredVelocity = dashDirection * dashSpeed;
+            rb.linearVelocity = new Vector3(desiredVelocity.x, rb.linearVelocity.y, desiredVelocity.z);
+
+            if (Physics.Raycast(transform.position, dashDirection, out RaycastHit hit, 1f))
+            {
+                if (!hit.collider.isTrigger)
+                {
+                    break;
+                }
+            }
 
             yield return new WaitForFixedUpdate();
         }
 
+        rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
+
+        if (!shouldTriggerOnAnimation)
+        {
+            TriggerDamage();
+        }
+
+        controller.SetAbilityState(false);
+    }
+
+    public void TriggerDamage()
+    {
         Collider[] hits = Physics.OverlapSphere(transform.position, slashRadius);
         foreach (Collider hit in hits)
         {
@@ -51,7 +73,5 @@ public class DashSlashAbility : MonoBehaviour
                 }
             }
         }
-
-        controller.SetAbilityState(false);
     }
 }
