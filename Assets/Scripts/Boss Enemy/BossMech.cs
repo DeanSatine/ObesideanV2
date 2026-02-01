@@ -192,17 +192,17 @@ namespace Boss_Enemy
             }
         }
 
-        private void Laser2() // 180 degree laser
+        private void Laser2() // 170 degree laser (not 180 because equations don't work well in half of 360 cases)
         {
             if (moveJustStarted)
             {
                 Debug.Log("Laser2 started");
                 destinationRotation = Quaternion.Euler(
                     0,
-                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y - 90,
+                    Quaternion.LookRotation(transform.position - playerTransform.position).eulerAngles.y - 85,
                     0
                 );
-                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + 90, 0);
+                transform.rotation = Quaternion.Euler(0, transform.rotation.eulerAngles.y + 85, 0);
                 moveJustStarted = false;
             }
 
