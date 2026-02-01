@@ -12,6 +12,9 @@ public class DashSlashAbility : MonoBehaviour
     [SerializeField] private GameObject dashTrailVFXPrefab;
     [SerializeField] private GameObject slashVFXPrefab;
 
+    [Header("Spawn Points")]
+    [SerializeField] private Transform handPoint;
+
     private GameObject dashTrailInstance;
     private ParticleSystem dashTrailVFX;
 
@@ -77,9 +80,12 @@ public class DashSlashAbility : MonoBehaviour
 
     public void TriggerDamage()
     {
+        Vector3 spawnPosition = handPoint != null ? handPoint.position : transform.position;
+        Quaternion spawnRotation = handPoint != null ? handPoint.rotation : transform.rotation;
+
         if (slashVFXPrefab != null)
         {
-            GameObject vfx = Instantiate(slashVFXPrefab, transform.position, transform.rotation);
+            GameObject vfx = Instantiate(slashVFXPrefab, spawnPosition, spawnRotation);
             Destroy(vfx, 3f);
         }
 
