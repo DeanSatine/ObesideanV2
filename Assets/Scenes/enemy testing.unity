@@ -535,12 +535,8 @@ PrefabInstance:
       value: BossTestSid
       objectReference: {fileID: 0}
     - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
-      propertyPath: laserSpeed
-      value: 10
-      objectReference: {fileID: 0}
-    - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: cooldownTime
-      value: 3
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: playerTransform
@@ -548,7 +544,7 @@ PrefabInstance:
       objectReference: {fileID: 780881156}
     - target: {fileID: 8460773065536767639, guid: dfd2f935e3025e64a899bdb95d6c62f6, type: 3}
       propertyPath: startingCooldown
-      value: 0
+      value: 2
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
