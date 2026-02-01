@@ -14,18 +14,28 @@ public class JumpSlamAbility : MonoBehaviour
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject landingVFXPrefab;
     [SerializeField] private GameObject shockwaveVFXPrefab;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
 
     private bool shouldTriggerOnAnimation = true;
 
-    public IEnumerator Execute(PlayerController controller)
+    public IEnumerator Execute(IAbilityUser user)
     {
-        controller.SetAbilityState(true);
+        user.SetAbilityState(true);
+        
+        bool isBoss = user is BossController;
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayJump(transform.position, isBoss);
+        }
 
         Vector3 startPos = transform.position;
         Vector3 targetPos = startPos + transform.forward * jumpForwardDistance;
         float elapsed = 0f;
 
-        Rigidbody rb = controller.GetRigidbody();
+        Rigidbody rb = user.GetRigidbody();
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.useGravity = false;
 
@@ -53,11 +63,20 @@ public class JumpSlamAbility : MonoBehaviour
             TriggerShockwave();
         }
 
-        controller.SetAbilityState(false);
+        user.SetAbilityState(false);
     }
 
     public void TriggerShockwave()
     {
+        bool isBoss = GetComponent<BossController>() != null;
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayLand(transform.position, isBoss);
+            audioEvents.PlayGroundSlam(transform.position);
+            audioEvents.PlayShockwave(transform.position);
+        }
+        
         if (landingVFXPrefab != null)
         {
             GameObject vfx = Instantiate(landingVFXPrefab, transform.position, Quaternion.identity);
@@ -98,6 +117,18 @@ public class JumpSlamAbility : MonoBehaviour
                     Vector3 direction = (hit.transform.position - transform.position).normalized;
                     direction.y = upwardForceMultiplier;
                     npc.Die(direction * shockwaveForce);
+                }
+                
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(shockwaveForce * 0.01f);
+                }
+                
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null && !boss.IsDead())
+                {
+                    boss.TakeDamage(shockwaveForce * 0.025f);
                 }
             }
         }

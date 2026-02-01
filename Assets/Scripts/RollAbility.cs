@@ -11,16 +11,26 @@ public class RollAbility : MonoBehaviour
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject rollTrailVFXPrefab;
     [SerializeField] private GameObject impactVFXPrefab;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
 
     private GameObject rollTrailInstance;
     private ParticleSystem rollTrailVFX;
 
     private bool isRolling;
 
-    public IEnumerator Execute(PlayerController controller)
+    public IEnumerator Execute(IAbilityUser user)
     {
-        controller.SetAbilityState(true);
+        user.SetAbilityState(true);
         isRolling = true;
+        
+        bool isBoss = user is BossController;
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayRoll(transform.position, isBoss);
+        }
 
         if (rollTrailVFXPrefab != null)
         {
@@ -33,7 +43,7 @@ public class RollAbility : MonoBehaviour
         float rollSpeed = rollDistance / rollDuration;
 
         float elapsed = 0f;
-        Rigidbody rb = controller.GetRigidbody();
+        Rigidbody rb = user.GetRigidbody();
         
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
@@ -71,7 +81,7 @@ public class RollAbility : MonoBehaviour
         }
 
         isRolling = false;
-        controller.SetAbilityState(false);
+        user.SetAbilityState(false);
     }
 
     public void TriggerDamage()
@@ -108,6 +118,18 @@ public class RollAbility : MonoBehaviour
                 {
                     Vector3 direction = (hit.transform.position - transform.position).normalized;
                     npc.Die(direction * rollDamage);
+                }
+                
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(rollDamage * 0.025f);
+                }
+                
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null && !boss.IsDead())
+                {
+                    boss.TakeDamage(rollDamage * 0.05f);
                 }
             }
         }

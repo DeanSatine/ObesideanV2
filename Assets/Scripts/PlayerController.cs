@@ -4,7 +4,7 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(Rigidbody))]
 [RequireComponent(typeof(CapsuleCollider))]
 [RequireComponent(typeof(Animator))]
-public class PlayerController : MonoBehaviour
+public class PlayerController : MonoBehaviour, IAbilityUser
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 10f;
@@ -33,9 +33,14 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private SubwayBeamAbility subwayBeam;
     [SerializeField] private RollAbility roll;
     [SerializeField] private ChompAbility chomp;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
+    [SerializeField] private float footstepInterval = 0.5f;
 
     private Rigidbody rb;
     private Animator animator;
+    private RagdollController ragdollController;
     private Vector2 moveInput;
     private Vector2 mouseLookDelta;
     private Vector3 currentVelocity;
@@ -47,6 +52,7 @@ public class PlayerController : MonoBehaviour
     private float lastRollTime = -999f;
     private float lastChompTime = -999f;
     private float firstJumpPressTime = -999f;
+    private float lastFootstepTime = -999f;
     private int jumpPressCount;
 
     private bool isLeftMousePressed;
@@ -71,6 +77,7 @@ public class PlayerController : MonoBehaviour
         rb.angularDamping = 2f;
 
         animator = GetComponent<Animator>();
+        ragdollController = GetComponent<RagdollController>();
 
         dashSlash = GetComponent<DashSlashAbility>();
         jumpSlam = GetComponent<JumpSlamAbility>();
@@ -227,6 +234,9 @@ public class PlayerController : MonoBehaviour
 
     private void Update()
     {
+        if (ragdollController != null && ragdollController.IsRagdolling())
+            return;
+        
         HandleMouseLook();
         
         if (isLeftMousePressed && isRightMousePressed)
@@ -270,6 +280,9 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if (ragdollController != null && ragdollController.IsRagdolling())
+            return;
+        
         if (!isPerformingAbility)
         {
             KeepPlayerUpright();
@@ -302,6 +315,12 @@ public class PlayerController : MonoBehaviour
                 targetVelocity,
                 acceleration * Time.fixedDeltaTime
             );
+            
+            if (audioEvents != null && Time.time - lastFootstepTime >= footstepInterval)
+            {
+                audioEvents.PlayFootstep(transform.position, false);
+                lastFootstepTime = Time.time;
+            }
         }
         else
         {

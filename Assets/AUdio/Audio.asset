@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0e31aff87f0406f439b0187063632fda, type: 3}
+  m_Name: Audio
+  m_EditorClassIdentifier: Assembly-CSharp::AudioEvents
+  musicClip: {fileID: 0}
+  ambienceClip: {fileID: 0}
+  footstepSounds: []
+  dashSound: {fileID: 0}
+  rollSound: {fileID: 0}
+  jumpSound: {fileID: 0}
+  landSound: {fileID: 0}
+  slashSound: {fileID: 0}
+  chompSound: {fileID: 0}
+  bossFootstepSounds: []
+  bossDashSound: {fileID: 0}
+  bossRollSound: {fileID: 0}
+  bossJumpSound: {fileID: 0}
+  bossLandSound: {fileID: 0}
+  bossSlashSound: {fileID: 0}
+  bossLaserChargeSound: {fileID: 0}
+  bossLaserFireSound: {fileID: 0}
+  laserBeamStartSound: {fileID: 0}
+  laserBeamLoopSound: {fileID: 0}
+  laserBeamEndSound: {fileID: 0}
+  laserImpactSound: {fileID: 0}
+  groundSlamImpactSound: {fileID: 0}
+  shockwaveSound: {fileID: 0}
+  playerHitSound: {fileID: 0}
+  bossHitSound: {fileID: 0}
+  explosionSound: {fileID: 0}
+  footstepVolume: 0.3
+  abilityVolume: 0.7
+  impactVolume: 0.8
+  laserVolume: 0.6

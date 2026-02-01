@@ -315,10 +315,18 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1633233415423174095}
+    - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 478857786635946938}
   m_SourcePrefab: {fileID: 100100000, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
 --- !u!4 &878679145007555075 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -3321919801592875672, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+  m_PrefabInstance: {fileID: 6762042194376284011}
+  m_PrefabAsset: {fileID: 0}
+--- !u!95 &917903254048795386 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 5866666021909216657, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
   m_PrefabInstance: {fileID: 6762042194376284011}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &4927559520305784995 stripped
@@ -527,6 +535,23 @@ MonoBehaviour:
   rightEyeGlowVFXPrefab: {fileID: 0}
   hitImpactVFXPrefab: {fileID: 0}
   explosionVFXPrefab: {fileID: 100010, guid: 6abcdaf8c8fd61b4697e96e8a1138d29, type: 3}
+--- !u!114 &478857786635946938
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5843121850595240506}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 665cb771a61abda45822615e07e70c96, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::RagdollController
+  ragdollDuration: 0.5
+  damageThresholdForRagdoll: 10
+  enableRagdollOnDamage: 1
+  animator: {fileID: 917903254048795386}
+  mainRigidbody: {fileID: 2648786062164829776}
 --- !u!4 &6511396859846406272 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}

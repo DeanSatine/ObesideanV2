@@ -21,6 +21,9 @@ public class SubwayBeamAbility : MonoBehaviour
     [SerializeField] private GameObject hitImpactVFXPrefab;
     [SerializeField] private GameObject explosionVFXPrefab;
 
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
+
     private ParticleSystem leftBeamVFX;
     private ParticleSystem rightBeamVFX;
     private ParticleSystem leftEyeGlowVFX;
@@ -149,10 +152,24 @@ public class SubwayBeamAbility : MonoBehaviour
         if (hitImpactInstance != null) Destroy(hitImpactInstance);
     }
 
-    public IEnumerator Execute(PlayerController controller)
+    public IEnumerator Execute(IAbilityUser user)
     {
-        controller.SetAbilityState(true);
+        user.SetAbilityState(true);
         InitializeVFX();
+
+        bool isBoss = user is BossController;
+
+        if (audioEvents != null)
+        {
+            audioEvents.PlayLaserCharge(transform.position, isBoss);
+        }
+
+        yield return new WaitForSeconds(0.5f);
+
+        if (audioEvents != null)
+        {
+            audioEvents.PlayLaserBeamStart(transform.position);
+        }
 
         if (leftBeamVFX != null) leftBeamVFX.Play();
         if (rightBeamVFX != null) rightBeamVFX.Play();
@@ -161,6 +178,8 @@ public class SubwayBeamAbility : MonoBehaviour
 
         float elapsed = 0f;
         float sweepAngle = -coneAngle / 2f;
+        float loopSoundInterval = 0.3f;
+        float lastLoopTime = 0f;
 
         while (elapsed < beamDuration)
         {
@@ -175,7 +194,18 @@ public class SubwayBeamAbility : MonoBehaviour
             FireBeam(leftEye, sweepDirection, leftBeamVFX, leftBeamShape);
             FireBeam(rightEye, sweepDirection, rightBeamVFX, rightBeamShape);
 
+            if (audioEvents != null && elapsed - lastLoopTime >= loopSoundInterval)
+            {
+                audioEvents.PlayLaserBeamLoop(transform.position);
+                lastLoopTime = elapsed;
+            }
+
             yield return null;
+        }
+
+        if (audioEvents != null)
+        {
+            audioEvents.PlayLaserBeamEnd(transform.position);
         }
 
         if (leftBeamVFX != null) leftBeamVFX.Stop();
@@ -183,7 +213,7 @@ public class SubwayBeamAbility : MonoBehaviour
         if (leftEyeGlowVFX != null) leftEyeGlowVFX.Stop();
         if (rightEyeGlowVFX != null) rightEyeGlowVFX.Stop();
 
-        controller.SetAbilityState(false);
+        user.SetAbilityState(false);
     }
 
     private void FireBeam(Transform eye, Vector3 direction, ParticleSystem beamVFX, ParticleSystem.ShapeModule beamShape)
@@ -228,41 +258,63 @@ public class SubwayBeamAbility : MonoBehaviour
                 shouldExplode = true;
             }
 
-            if (shouldExplode && explosionVFXPrefab != null && Random.value < 0.1f)
+            PlayerHealth playerHealth = hit.collider.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
             {
-                GameObject explosion = Instantiate(explosionVFXPrefab, hit.point, Quaternion.identity);
-                Destroy(explosion, 3f);
+                playerHealth.TakeDamage(damagePerSecond * Time.deltaTime * 0.01f);
+                shouldExplode = true;
             }
 
-            if (didHit && hitImpactVFX != null)
+            BossController boss = hit.collider.GetComponent<BossController>();
+            if (boss != null && !boss.IsDead())
             {
-                if (!hitImpactInstance.activeSelf)
+                boss.TakeDamage(damagePerSecond * Time.deltaTime * 0.02f);
+                shouldExplode = true;
+            }
+
+            if (shouldExplode)
+            {
+                if (audioEvents != null && Random.value < 0.05f)
                 {
-                    hitImpactInstance.SetActive(true);
+                    audioEvents.PlayLaserImpact(hit.point);
                 }
-                hitImpactVFX.transform.position = hit.point;
-                hitImpactVFX.transform.rotation = Quaternion.LookRotation(hit.normal);
-                if (!hitImpactVFX.isPlaying)
+
+                if (explosionVFXPrefab != null && Random.value < 0.1f)
                 {
-                    hitImpactVFX.Play();
+                    GameObject explosion = Instantiate(explosionVFXPrefab, hit.point, Quaternion.identity);
+                    Destroy(explosion, 3f);
+                }
+
+                if (didHit && hitImpactVFX != null)
+                {
+                    if (!hitImpactInstance.activeSelf)
+                    {
+                        hitImpactInstance.SetActive(true);
+                    }
+                    hitImpactVFX.transform.position = hit.point;
+                    hitImpactVFX.transform.rotation = Quaternion.LookRotation(hit.normal);
+                    if (!hitImpactVFX.isPlaying)
+                    {
+                        hitImpactVFX.Play();
+                    }
                 }
             }
-        }
-        else
-        {
-            if (hitImpactVFX != null && hitImpactVFX.isPlaying)
+            else
             {
-                hitImpactVFX.Stop();
-                hitImpactInstance.SetActive(false);
+                if (hitImpactVFX != null && hitImpactVFX.isPlaying)
+                {
+                    hitImpactVFX.Stop();
+                    hitImpactInstance.SetActive(false);
+                }
             }
-        }
 
-        if (beamVFX != null)
-        {
-            beamVFX.transform.position = eye.position;
-            beamVFX.transform.rotation = Quaternion.LookRotation(direction);
+            if (beamVFX != null)
+            {
+                beamVFX.transform.position = eye.position;
+                beamVFX.transform.rotation = Quaternion.LookRotation(direction);
 
-            beamShape.scale = new Vector3(0.5f, 0.5f, distance);
+                beamShape.scale = new Vector3(0.5f, 0.5f, distance);
+            }
         }
     }
 }

@@ -14,15 +14,25 @@ public class DashSlashAbility : MonoBehaviour
 
     [Header("Spawn Points")]
     [SerializeField] private Transform handPoint;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
 
     private GameObject dashTrailInstance;
     private ParticleSystem dashTrailVFX;
 
     private bool shouldTriggerOnAnimation = true;
 
-    public IEnumerator Execute(PlayerController controller)
+    public IEnumerator Execute(IAbilityUser user)
     {
-        controller.SetAbilityState(true);
+        user.SetAbilityState(true);
+        
+        bool isBoss = user is BossController;
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayDash(transform.position, isBoss);
+        }
 
         if (dashTrailVFXPrefab != null)
         {
@@ -35,7 +45,7 @@ public class DashSlashAbility : MonoBehaviour
         float dashSpeed = dashDistance / dashDuration;
 
         float elapsed = 0f;
-        Rigidbody rb = controller.GetRigidbody();
+        Rigidbody rb = user.GetRigidbody();
         
         rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
@@ -75,13 +85,20 @@ public class DashSlashAbility : MonoBehaviour
             TriggerDamage();
         }
 
-        controller.SetAbilityState(false);
+        user.SetAbilityState(false);
     }
 
     public void TriggerDamage()
     {
         Vector3 spawnPosition = handPoint != null ? handPoint.position : transform.position;
         Quaternion spawnRotation = handPoint != null ? handPoint.rotation : transform.rotation;
+        
+        bool isBoss = GetComponent<BossController>() != null;
+
+        if (audioEvents != null)
+        {
+            audioEvents.PlaySlash(spawnPosition, isBoss);
+        }
 
         if (slashVFXPrefab != null)
         {
@@ -113,6 +130,18 @@ public class DashSlashAbility : MonoBehaviour
                 {
                     Vector3 direction = (hit.transform.position - transform.position).normalized;
                     npc.Die(direction * slashDamage);
+                }
+                
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(slashDamage * 0.02f);
+                }
+                
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null && !boss.IsDead())
+                {
+                    boss.TakeDamage(slashDamage * 0.05f);
                 }
             }
         }

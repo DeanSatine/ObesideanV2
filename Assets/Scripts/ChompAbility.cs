@@ -10,10 +10,13 @@ public class ChompAbility : MonoBehaviour
 
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject chompVFXPrefab;
+    
+    [Header("Audio")]
+    [SerializeField] private AudioEvents audioEvents;
 
     private float nextChompTime;
 
-    public IEnumerator Execute(PlayerController controller)
+    public IEnumerator Execute(IAbilityUser user)
     {
         if (Time.time >= nextChompTime)
         {
@@ -31,6 +34,11 @@ public class ChompAbility : MonoBehaviour
     private void PerformChomp()
     {
         Vector3 chompCenter = mouthPosition != null ? mouthPosition.position : transform.position + transform.forward * 2f;
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayChomp(chompCenter);
+        }
         
         if (chompVFXPrefab != null)
         {
@@ -63,6 +71,18 @@ public class ChompAbility : MonoBehaviour
                 {
                     Vector3 direction = (hit.transform.position - chompCenter).normalized;
                     npc.Die(direction * damagePerChomp);
+                }
+                
+                PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
+                if (playerHealth != null)
+                {
+                    playerHealth.TakeDamage(damagePerChomp * 0.05f);
+                }
+                
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null && !boss.IsDead())
+                {
+                    boss.TakeDamage(damagePerChomp * 0.1f);
                 }
             }
         }
