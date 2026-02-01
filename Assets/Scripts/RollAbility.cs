@@ -8,9 +8,12 @@ public class RollAbility : MonoBehaviour
     [SerializeField] private float rollDamage = 800f;
     [SerializeField] private float damageRadius = 5f;
 
-    [Header("VFX")]
-    [SerializeField] private ParticleSystem rollTrailVFX;
-    [SerializeField] private ParticleSystem impactVFX;
+    [Header("VFX Prefabs")]
+    [SerializeField] private GameObject rollTrailVFXPrefab;
+    [SerializeField] private GameObject impactVFXPrefab;
+
+    private GameObject rollTrailInstance;
+    private ParticleSystem rollTrailVFX;
 
     private bool isRolling;
 
@@ -19,9 +22,11 @@ public class RollAbility : MonoBehaviour
         controller.SetAbilityState(true);
         isRolling = true;
 
-        if (rollTrailVFX != null)
+        if (rollTrailVFXPrefab != null)
         {
-            rollTrailVFX.Play();
+            rollTrailInstance = Instantiate(rollTrailVFXPrefab, transform.position, Quaternion.identity, transform);
+            rollTrailVFX = rollTrailInstance.GetComponent<ParticleSystem>();
+            if (rollTrailVFX != null) rollTrailVFX.Play();
         }
 
         Vector3 rollDirection = transform.forward;
@@ -52,12 +57,17 @@ public class RollAbility : MonoBehaviour
             yield return new WaitForFixedUpdate();
         }
 
-        rb.linearVelocity = new Vector3(0f, rb.linearVelocity.y, 0f);
+        rb.linearVelocity = Vector3.zero;
         rb.collisionDetectionMode = CollisionDetectionMode.Discrete;
 
         if (rollTrailVFX != null)
         {
             rollTrailVFX.Stop();
+        }
+
+        if (rollTrailInstance != null)
+        {
+            Destroy(rollTrailInstance, 2f);
         }
 
         isRolling = false;
@@ -68,10 +78,10 @@ public class RollAbility : MonoBehaviour
     {
         if (!isRolling) return;
 
-        if (impactVFX != null)
+        if (impactVFXPrefab != null)
         {
-            impactVFX.transform.position = transform.position;
-            impactVFX.Play();
+            GameObject vfx = Instantiate(impactVFXPrefab, transform.position, Quaternion.identity);
+            Destroy(vfx, 3f);
         }
 
         Collider[] hits = Physics.OverlapSphere(transform.position, damageRadius);

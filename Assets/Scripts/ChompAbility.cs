@@ -8,8 +8,8 @@ public class ChompAbility : MonoBehaviour
     [SerializeField] private float chompInterval = 0.5f;
     [SerializeField] private Transform mouthPosition;
 
-    [Header("VFX")]
-    [SerializeField] private ParticleSystem chompVFX;
+    [Header("VFX Prefabs")]
+    [SerializeField] private GameObject chompVFXPrefab;
 
     private float nextChompTime;
 
@@ -32,10 +32,10 @@ public class ChompAbility : MonoBehaviour
     {
         Vector3 chompCenter = mouthPosition != null ? mouthPosition.position : transform.position + transform.forward * 2f;
         
-        if (chompVFX != null)
+        if (chompVFXPrefab != null)
         {
-            chompVFX.transform.position = chompCenter;
-            chompVFX.Play();
+            GameObject vfx = Instantiate(chompVFXPrefab, chompCenter, Quaternion.identity);
+            Destroy(vfx, 3f);
         }
 
         Collider[] hits = Physics.OverlapSphere(chompCenter, chompRadius);

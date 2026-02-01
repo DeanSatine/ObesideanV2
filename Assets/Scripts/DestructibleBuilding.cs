@@ -43,18 +43,16 @@ public class DestructibleBuilding : MonoBehaviour
 
     public void ApplyDamage(Vector3 force, Vector3 hitPoint)
     {
-        if (isKnockedDown) return;
+        if (!isKnockedDown)
+        {
+            isKnockedDown = true;
 
-        isKnockedDown = true;
+            rb = gameObject.AddComponent<Rigidbody>();
+            rb.mass = buildingMass;
+            rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        }
 
-        rb = gameObject.AddComponent<Rigidbody>();
-        rb.mass = buildingMass;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
-
-        Vector3 pushDirection = (transform.position - hitPoint).normalized;
-        pushDirection.y = 0.3f;
-
-        rb.AddForce(force + pushDirection * pushForce, ForceMode.Impulse);
+        rb.AddForce(force, ForceMode.Impulse);
         rb.AddTorque(Random.insideUnitSphere * pushForce, ForceMode.Impulse);
     }
 }

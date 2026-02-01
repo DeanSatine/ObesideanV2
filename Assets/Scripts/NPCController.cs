@@ -8,14 +8,23 @@ public class NPCController : MonoBehaviour
     [SerializeField] private float bobHeight = 0.1f;
     [SerializeField] private float directionChangeInterval = 3f;
     [SerializeField] private float moveRadius = 10f;
+    [SerializeField] private float bounceForce = 300f;
+    [SerializeField] private float bounceInterval = 2f;
+    [SerializeField] private float randomSpinSpeed = 50f;
 
-    [Header("VFX")]
-    [SerializeField] private ParticleSystem deathVFX;
+    [Header("VFX Prefabs")]
+    [SerializeField] private GameObject deathVFXPrefab;
+
+    [Header("Death Physics")]
+    [SerializeField] private float bounciness = 0.9f;
+    [SerializeField] private float spinTorqueMultiplier = 500f;
+    [SerializeField] private float npcMass = 50f;
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
     private float bobOffset;
     private float directionTimer;
+    private float bounceTimer;
     private bool isDead = false;
     private Rigidbody rb;
     private Collider col;
@@ -27,9 +36,36 @@ public class NPCController : MonoBehaviour
         startPosition = transform.position;
         bobOffset = Random.Range(0f, Mathf.PI * 2f);
         directionTimer = Random.Range(0f, directionChangeInterval);
+        bounceTimer = Random.Range(0f, bounceInterval);
         
         ApplyRandomColor();
         ChooseNewTarget();
+        SetupPhysics();
+    }
+
+    private void SetupPhysics()
+    {
+        rb = gameObject.AddComponent<Rigidbody>();
+        rb.mass = npcMass;
+        rb.linearDamping = 0.5f;
+        rb.angularDamping = 0.3f;
+        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.interpolation = RigidbodyInterpolation.Interpolate;
+        rb.constraints = RigidbodyConstraints.None;
+
+        PhysicsMaterial bouncyMaterial = new PhysicsMaterial("BouncyNPC");
+        bouncyMaterial.bounciness = bounciness;
+        bouncyMaterial.bounceCombine = PhysicsMaterialCombine.Maximum;
+        bouncyMaterial.frictionCombine = PhysicsMaterialCombine.Minimum;
+        bouncyMaterial.dynamicFriction = 0.1f;
+        bouncyMaterial.staticFriction = 0.1f;
+
+        col = GetComponent<Collider>();
+        if (col != null)
+        {
+            col.material = bouncyMaterial;
+            col.isTrigger = false;
+        }
     }
 
     private void ApplyRandomColor()
@@ -59,33 +95,42 @@ public class NPCController : MonoBehaviour
             ChooseNewTarget();
         }
 
-        Vector3 horizontalTarget = Vector3.MoveTowards(
-            new Vector3(transform.position.x, 0, transform.position.z),
-            new Vector3(targetPosition.x, 0, targetPosition.z),
-            moveSpeed * Time.deltaTime
-        );
-
-        float bobAmount = Mathf.Sin(Time.time * bobSpeed + bobOffset) * bobHeight;
-        
-        transform.position = new Vector3(
-            horizontalTarget.x,
-            startPosition.y + bobAmount,
-            horizontalTarget.z
-        );
-
-        if (horizontalTarget != new Vector3(transform.position.x, 0, transform.position.z))
+        bounceTimer -= Time.deltaTime;
+        if (bounceTimer <= 0f)
         {
-            Vector3 lookDirection = targetPosition - transform.position;
-            lookDirection.y = 0;
-            if (lookDirection != Vector3.zero)
-            {
-                transform.rotation = Quaternion.Slerp(
-                    transform.rotation,
-                    Quaternion.LookRotation(lookDirection),
-                    5f * Time.deltaTime
-                );
-            }
+            bounceTimer = bounceInterval;
+            DoRandomBounce();
         }
+
+        Vector3 directionToTarget = targetPosition - transform.position;
+        directionToTarget.y = 0;
+
+        if (directionToTarget.magnitude > 0.5f)
+        {
+            Vector3 moveForce = directionToTarget.normalized * moveSpeed;
+            rb.AddForce(moveForce, ForceMode.Force);
+        }
+
+        rb.AddTorque(Random.insideUnitSphere * randomSpinSpeed * Time.deltaTime, ForceMode.Force);
+
+        if (rb.linearVelocity.magnitude > moveSpeed * 2f)
+        {
+            rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed * 2f;
+        }
+    }
+
+    private void DoRandomBounce()
+    {
+        Vector3 bounceDirection = new Vector3(
+            Random.Range(-0.5f, 0.5f),
+            1f,
+            Random.Range(-0.5f, 0.5f)
+        ).normalized;
+
+        rb.AddForce(bounceDirection * bounceForce, ForceMode.Impulse);
+
+        Vector3 randomTorque = Random.insideUnitSphere * randomSpinSpeed;
+        rb.AddTorque(randomTorque, ForceMode.Impulse);
     }
 
     private void ChooseNewTarget()
@@ -100,27 +145,25 @@ public class NPCController : MonoBehaviour
 
         isDead = true;
 
-        if (deathVFX != null)
+        if (deathVFXPrefab != null)
         {
-            deathVFX.transform.position = transform.position;
-            deathVFX.transform.SetParent(null);
-            deathVFX.Play();
-            Destroy(deathVFX.gameObject, deathVFX.main.duration);
+            GameObject vfx = Instantiate(deathVFXPrefab, transform.position, Quaternion.identity);
+            Destroy(vfx, 3f);
         }
 
-        rb = gameObject.AddComponent<Rigidbody>();
-        rb.mass = 50f;
-        rb.collisionDetectionMode = CollisionDetectionMode.Continuous;
+        rb.linearDamping = 0.1f;
+        rb.angularDamping = 0.1f;
+
         rb.AddForce(force, ForceMode.Impulse);
-        rb.AddTorque(Random.insideUnitSphere * 100f, ForceMode.Impulse);
+        
+        Vector3 randomSpin = new Vector3(
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f),
+            Random.Range(-1f, 1f)
+        ).normalized;
+        rb.AddTorque(randomSpin * spinTorqueMultiplier, ForceMode.Impulse);
 
-        col = GetComponent<Collider>();
-        if (col != null)
-        {
-            col.enabled = false;
-        }
-
-        Destroy(gameObject, 5f);
+        Destroy(gameObject, 8f);
     }
 
     private void OnDestroy()
@@ -139,6 +182,19 @@ public class NPCController : MonoBehaviour
         if (player != null)
         {
             Vector3 direction = (transform.position - other.transform.position).normalized;
+            direction.y = 1f;
+            Die(direction * 500f);
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        if (isDead) return;
+
+        PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+        if (player != null)
+        {
+            Vector3 direction = (transform.position - collision.contacts[0].point).normalized;
             direction.y = 1f;
             Die(direction * 500f);
         }

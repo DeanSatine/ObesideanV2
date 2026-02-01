@@ -8,9 +8,12 @@ public class DashSlashAbility : MonoBehaviour
     [SerializeField] private float slashRadius = 8f;
     [SerializeField] private float slashDamage = 1000f;
 
-    [Header("VFX")]
-    [SerializeField] private ParticleSystem dashTrailVFX;
-    [SerializeField] private ParticleSystem slashVFX;
+    [Header("VFX Prefabs")]
+    [SerializeField] private GameObject dashTrailVFXPrefab;
+    [SerializeField] private GameObject slashVFXPrefab;
+
+    private GameObject dashTrailInstance;
+    private ParticleSystem dashTrailVFX;
 
     private bool shouldTriggerOnAnimation = true;
 
@@ -18,9 +21,11 @@ public class DashSlashAbility : MonoBehaviour
     {
         controller.SetAbilityState(true);
 
-        if (dashTrailVFX != null)
+        if (dashTrailVFXPrefab != null)
         {
-            dashTrailVFX.Play();
+            dashTrailInstance = Instantiate(dashTrailVFXPrefab, transform.position, Quaternion.identity, transform);
+            dashTrailVFX = dashTrailInstance.GetComponent<ParticleSystem>();
+            if (dashTrailVFX != null) dashTrailVFX.Play();
         }
 
         Vector3 dashDirection = transform.forward;
@@ -57,6 +62,11 @@ public class DashSlashAbility : MonoBehaviour
             dashTrailVFX.Stop();
         }
 
+        if (dashTrailInstance != null)
+        {
+            Destroy(dashTrailInstance, 2f);
+        }
+
         if (!shouldTriggerOnAnimation)
         {
             TriggerDamage();
@@ -67,10 +77,10 @@ public class DashSlashAbility : MonoBehaviour
 
     public void TriggerDamage()
     {
-        if (slashVFX != null)
+        if (slashVFXPrefab != null)
         {
-            slashVFX.transform.position = transform.position;
-            slashVFX.Play();
+            GameObject vfx = Instantiate(slashVFXPrefab, transform.position, transform.rotation);
+            Destroy(vfx, 3f);
         }
 
         Collider[] hits = Physics.OverlapSphere(transform.position, slashRadius);

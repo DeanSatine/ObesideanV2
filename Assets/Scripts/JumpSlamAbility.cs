@@ -8,11 +8,12 @@ public class JumpSlamAbility : MonoBehaviour
     [SerializeField] private float jumpDuration = 0.8f;
     [SerializeField] private float shockwaveRadius = 12f;
     [SerializeField] private float shockwaveForce = 2000f;
-    [SerializeField] private float upwardForceMultiplier = 1.5f;
+    [SerializeField] private float upwardForceMultiplier = 2.5f;
+    [SerializeField] private float bounceForce = 3000f;
 
-    [Header("VFX")]
-    [SerializeField] private ParticleSystem landingVFX;
-    [SerializeField] private ParticleSystem shockwaveVFX;
+    [Header("VFX Prefabs")]
+    [SerializeField] private GameObject landingVFXPrefab;
+    [SerializeField] private GameObject shockwaveVFXPrefab;
 
     private bool shouldTriggerOnAnimation = true;
 
@@ -57,16 +58,16 @@ public class JumpSlamAbility : MonoBehaviour
 
     public void TriggerShockwave()
     {
-        if (landingVFX != null)
+        if (landingVFXPrefab != null)
         {
-            landingVFX.transform.position = transform.position;
-            landingVFX.Play();
+            GameObject vfx = Instantiate(landingVFXPrefab, transform.position, Quaternion.identity);
+            Destroy(vfx, 3f);
         }
 
-        if (shockwaveVFX != null)
+        if (shockwaveVFXPrefab != null)
         {
-            shockwaveVFX.transform.position = transform.position;
-            shockwaveVFX.Play();
+            GameObject vfx = Instantiate(shockwaveVFXPrefab, transform.position, Quaternion.identity);
+            Destroy(vfx, 3f);
         }
 
         Collider[] hits = Physics.OverlapSphere(transform.position, shockwaveRadius);
@@ -78,12 +79,13 @@ public class JumpSlamAbility : MonoBehaviour
                 if (building != null)
                 {
                     Vector3 direction = (hit.transform.position - transform.position).normalized;
-                    direction.y = upwardForceMultiplier;
-                    building.ApplyDamage(direction * shockwaveForce, hit.ClosestPoint(transform.position));
+                    direction.y = 0;
+                    Vector3 bounceDirection = (direction * 0.3f + Vector3.up).normalized;
+                    building.ApplyDamage(bounceDirection * bounceForce, hit.ClosestPoint(transform.position));
                 }
 
                 Rigidbody hitRb = hit.GetComponent<Rigidbody>();
-                if (hitRb != null)
+                if (hitRb != null && building == null)
                 {
                     Vector3 force = (hit.transform.position - transform.position).normalized;
                     force.y = upwardForceMultiplier;

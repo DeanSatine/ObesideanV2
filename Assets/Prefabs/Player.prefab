@@ -59,7 +59,7 @@ Transform:
   m_GameObject: {fileID: 4070712709605527451}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0, y: 16.1, z: -9.4}
+  m_LocalPosition: {x: -0, y: 14.2, z: -9.4}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -137,7 +137,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraShake
   footstepShakeDuration: 0.1
-  footstepShakeAmount: 0.02
+  footstepShakeAmount: 0.1
 --- !u!1 &4089960566734279294
 GameObject:
   m_ObjectHideFlags: 0
@@ -162,12 +162,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 4089960566734279294}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.01, y: 8.44, z: 1.58}
+  m_LocalRotation: {x: -0.0000000027939675, y: -0.0000000019647757, z: 9.2297205e-11, w: 1}
+  m_LocalPosition: {x: 1.0035144, y: 0.77634734, z: 1.6241997}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6511396859846406272}
+  m_Father: {fileID: 878679145007555075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6874157853838070128
 GameObject:
@@ -193,12 +193,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6874157853838070128}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.54, y: 8.44, z: 1.58}
+  m_LocalRotation: {x: -0.0000000027939675, y: -0.0000000019647757, z: 9.2297205e-11, w: 1}
+  m_LocalPosition: {x: -0.5464851, y: 0.77634734, z: 1.6241987}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 6511396859846406272}
+  m_Father: {fileID: 878679145007555075}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &6762042194376284011
 PrefabInstance:
@@ -281,12 +281,12 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
       insertIndex: -1
       addedObject: {fileID: 1435221994896708962}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
-      insertIndex: -1
-      addedObject: {fileID: 1747181088865081927}
-    - targetCorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
-      insertIndex: -1
+    - targetCorrespondingSourceObject: {fileID: -3321919801592875672, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+      insertIndex: 0
       addedObject: {fileID: 2283370190329034087}
+    - targetCorrespondingSourceObject: {fileID: -3321919801592875672, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+      insertIndex: 1
+      addedObject: {fileID: 1747181088865081927}
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 919132149155446097, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
       insertIndex: -1
@@ -316,6 +316,11 @@ PrefabInstance:
       insertIndex: -1
       addedObject: {fileID: 1633233415423174095}
   m_SourcePrefab: {fileID: 100100000, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+--- !u!4 &878679145007555075 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -3321919801592875672, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
+  m_PrefabInstance: {fileID: 6762042194376284011}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &5843121850595240506 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
@@ -431,6 +436,8 @@ MonoBehaviour:
   dashDuration: 0.3
   slashRadius: 8
   slashDamage: 1000
+  dashTrailVFXPrefab: {fileID: 0}
+  slashVFXPrefab: {fileID: 0}
 --- !u!114 &2190038197980621114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -448,6 +455,10 @@ MonoBehaviour:
   jumpDuration: 0.8
   shockwaveRadius: 12
   shockwaveForce: 2000
+  upwardForceMultiplier: 1.5
+  bounceForce: 3000
+  landingVFXPrefab: {fileID: 0}
+  shockwaveVFXPrefab: {fileID: 0}
 --- !u!114 &9131609928985454707
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -464,6 +475,8 @@ MonoBehaviour:
   rollDuration: 0.5
   rollDamage: 800
   damageRadius: 5
+  rollTrailVFXPrefab: {fileID: 0}
+  impactVFXPrefab: {fileID: 0}
 --- !u!114 &9145144322831407713
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -480,6 +493,7 @@ MonoBehaviour:
   damagePerChomp: 300
   chompInterval: 0.5
   mouthPosition: {fileID: 1435221994896708962}
+  chompVFXPrefab: {fileID: 0}
 --- !u!114 &1633233415423174095
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -499,8 +513,14 @@ MonoBehaviour:
   coneAngle: 90
   damagePerSecond: 500
   sweepSpeed: 30
-  leftBeamLine: {fileID: 0}
-  rightBeamLine: {fileID: 0}
+  explosionForce: 5000
+  explosionUpwardBias: 1.5
+  leftBeamVFXPrefab: {fileID: 100008, guid: 57d5dba2f8641af4ead48bb998767d36, type: 3}
+  rightBeamVFXPrefab: {fileID: 100008, guid: 57d5dba2f8641af4ead48bb998767d36, type: 3}
+  leftEyeGlowVFXPrefab: {fileID: 0}
+  rightEyeGlowVFXPrefab: {fileID: 0}
+  hitImpactVFXPrefab: {fileID: 0}
+  explosionVFXPrefab: {fileID: 100010, guid: 6abcdaf8c8fd61b4697e96e8a1138d29, type: 3}
 --- !u!4 &6511396859846406272 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 9dac042344e51d64d9b6169a3658bb18, type: 3}
