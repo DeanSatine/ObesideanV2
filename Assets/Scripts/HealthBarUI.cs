@@ -23,7 +23,21 @@ public class HealthBarUI : MonoBehaviour
         if (smoothTransition && fillImage != null)
         {
             currentFillAmount = Mathf.Lerp(currentFillAmount, targetFillAmount, Time.deltaTime * transitionSpeed);
-            fillImage.fillAmount = currentFillAmount;
+            UpdateFillDisplay(currentFillAmount);
+        }
+    }
+
+    private void UpdateFillDisplay(float amount)
+    {
+        if (fillImage == null) return;
+        
+        if (fillImage.type == Image.Type.Filled)
+        {
+            fillImage.fillAmount = amount;
+        }
+        else
+        {
+            fillImage.rectTransform.localScale = new Vector3(amount, 1f, 1f);
         }
     }
 
@@ -36,7 +50,7 @@ public class HealthBarUI : MonoBehaviour
 
         if (!smoothTransition)
         {
-            fillImage.fillAmount = targetFillAmount;
+            UpdateFillDisplay(targetFillAmount);
             currentFillAmount = targetFillAmount;
         }
 
@@ -54,7 +68,7 @@ public class HealthBarUI : MonoBehaviour
         
         if (!smoothTransition && fillImage != null)
         {
-            fillImage.fillAmount = targetFillAmount;
+            UpdateFillDisplay(targetFillAmount);
             currentFillAmount = targetFillAmount;
         }
     }

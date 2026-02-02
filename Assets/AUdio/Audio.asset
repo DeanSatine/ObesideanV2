@@ -12,13 +12,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0e31aff87f0406f439b0187063632fda, type: 3}
   m_Name: Audio
   m_EditorClassIdentifier: Assembly-CSharp::AudioEvents
-  musicClip: {fileID: 0}
-  ambienceClip: {fileID: 0}
+  musicClip: {fileID: 8300000, guid: 7450e437227554e4a982b8db856ff52c, type: 3}
+  ambienceClip: {fileID: 8300000, guid: 7888c6fe6830da845b0deff847fce320, type: 3}
   footstepSounds: []
-  dashSound: {fileID: 0}
-  rollSound: {fileID: 0}
-  jumpSound: {fileID: 0}
-  landSound: {fileID: 0}
+  dashSound: {fileID: 8300000, guid: 54d253e0228279d44852ee3193c633e2, type: 3}
+  rollSound: {fileID: 8300000, guid: 54d253e0228279d44852ee3193c633e2, type: 3}
+  jumpSound: {fileID: 8300000, guid: 54d253e0228279d44852ee3193c633e2, type: 3}
+  landSound: {fileID: 8300000, guid: 7985dddb460d01c45bbf822b0df80192, type: 3}
   slashSound: {fileID: 0}
   chompSound: {fileID: 0}
   bossFootstepSounds: []
@@ -29,8 +29,8 @@ MonoBehaviour:
   bossSlashSound: {fileID: 0}
   bossLaserChargeSound: {fileID: 0}
   bossLaserFireSound: {fileID: 0}
-  laserBeamStartSound: {fileID: 0}
-  laserBeamLoopSound: {fileID: 0}
+  laserBeamStartSound: {fileID: 8300000, guid: 8fa48d8229026964888a42e93b564ed9, type: 3}
+  laserBeamLoopSound: {fileID: 8300000, guid: da9160c9ee69f6a4fa23cd9867f68e0d, type: 3}
   laserBeamEndSound: {fileID: 0}
   laserImpactSound: {fileID: 0}
   groundSlamImpactSound: {fileID: 0}

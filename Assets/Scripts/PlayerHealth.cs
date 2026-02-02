@@ -45,6 +45,11 @@ public class PlayerHealth : MonoBehaviour
         {
             audioEvents.PlayPlayerHit(transform.position);
         }
+        
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakePlayerHit();
+        }
 
         if (ragdollController != null && currentHealth > 0f)
         {
@@ -62,6 +67,13 @@ public class PlayerHealth : MonoBehaviour
         currentHealth += amount;
         currentHealth = Mathf.Min(currentHealth, maxHealth);
         UpdateHealthUI();
+    }
+    
+    public void RestoreFullHealth()
+    {
+        currentHealth = maxHealth;
+        UpdateHealthUI();
+        Debug.Log("Player health restored to full!");
     }
 
     private void UpdateHealthUI()
@@ -94,6 +106,11 @@ public class PlayerHealth : MonoBehaviour
         if (ragdollController != null)
         {
             ragdollController.EnablePermanentRagdoll(Vector3.up * 5f);
+        }
+        
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnPlayerDeath();
         }
     }
 }

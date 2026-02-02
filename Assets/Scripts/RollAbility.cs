@@ -3,10 +3,11 @@ using UnityEngine;
 
 public class RollAbility : MonoBehaviour
 {
-    [SerializeField] private float rollDistance = 12f;
+    [SerializeField] private float rollDistance = 20f;
     [SerializeField] private float rollDuration = 0.5f;
     [SerializeField] private float rollDamage = 800f;
-    [SerializeField] private float damageRadius = 5f;
+    [SerializeField] private float damageRadius = 10f;
+    [SerializeField] private float rollRotationSpeed = 720f;
 
     [Header("VFX Prefabs")]
     [SerializeField] private GameObject rollTrailVFXPrefab;
@@ -54,7 +55,7 @@ public class RollAbility : MonoBehaviour
             Vector3 desiredVelocity = rollDirection * rollSpeed;
             rb.linearVelocity = new Vector3(desiredVelocity.x, rb.linearVelocity.y, desiredVelocity.z);
 
-            transform.Rotate(Vector3.right, 720f * Time.deltaTime);
+            transform.Rotate(Vector3.right, rollRotationSpeed * Time.deltaTime);
 
             if (Physics.Raycast(transform.position, rollDirection, out RaycastHit hit, 1f))
             {
@@ -87,6 +88,11 @@ public class RollAbility : MonoBehaviour
     public void TriggerDamage()
     {
         if (!isRolling) return;
+        
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeRoll();
+        }
 
         if (impactVFXPrefab != null)
         {
@@ -120,16 +126,16 @@ public class RollAbility : MonoBehaviour
                     npc.Die(direction * rollDamage);
                 }
                 
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null)
+                {
+                    boss.TakeDamage(rollDamage * 0.15f);
+                }
+                
                 PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(rollDamage * 0.025f);
-                }
-                
-                BossController boss = hit.GetComponent<BossController>();
-                if (boss != null && !boss.IsDead())
-                {
-                    boss.TakeDamage(rollDamage * 0.05f);
                 }
             }
         }

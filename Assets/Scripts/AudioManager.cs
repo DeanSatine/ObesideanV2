@@ -5,24 +5,37 @@ public class AudioManager : MonoBehaviour
 {
     public static AudioManager Instance { get; private set; }
 
-    [Header("Audio Sources")]
-    [SerializeField] private AudioSource musicSource;
-    [SerializeField] private AudioSource ambienceSource;
-    [SerializeField] private AudioSource sfxSourcePrefab;
-    
     [Header("Music")]
     [SerializeField] private AudioClip musicClip;
-    [SerializeField] private float musicVolume = 0.6f;
+    [SerializeField] private float musicVolume = 0.54f;
     
-    [Header("Ambience")]
-    [SerializeField] private AudioClip crowdScreamingClip;
-    [SerializeField] private float ambienceVolume = 0.4f;
+    [Header("NPC Ambience")]
+    [SerializeField] private AudioClip npcScreamingClip;
+    [SerializeField] private float npcAmbienceVolume = 0.4f;
+    [SerializeField] private float npcScreamInterval = 5f;
+    [SerializeField] private float npcScreamVariance = 2f;
+    
+    [Header("Attack VFX Sounds")]
+    [SerializeField] private AudioClip rollAttackSound;
+    [SerializeField] private AudioClip jumpAttackSound;
+    [SerializeField] private AudioClip slashAttackSound;
+    [SerializeField] private AudioClip chompAttackSound;
+    [SerializeField] private float attackSoundVolume = 0.7f;
+    
+    [Header("Movement & Ability Sounds")]
+    [SerializeField] private AudioClip footstepSound;
+    [SerializeField] private AudioClip laserEyesSound;
+    [SerializeField] private float footstepVolume = 0.5f;
+    [SerializeField] private float laserEyesVolume = 0.7f;
     
     [Header("SFX Pool Settings")]
-    [SerializeField] private int sfxPoolSize = 10;
+    [SerializeField] private int sfxPoolSize = 20;
     
+    private AudioSource musicSource;
+    private AudioSource npcAmbienceSource;
     private Queue<AudioSource> sfxPool = new Queue<AudioSource>();
     private List<AudioSource> activeSfxSources = new List<AudioSource>();
+    private float nextNPCScreamTime;
 
     private void Awake()
     {
@@ -42,37 +55,24 @@ public class AudioManager : MonoBehaviour
     private void Start()
     {
         PlayMusic();
-        PlayAmbience();
+        ScheduleNextNPCScream();
     }
 
     private void InitializeAudioSources()
     {
-        if (musicSource == null)
-        {
-            GameObject musicObj = new GameObject("MusicSource");
-            musicObj.transform.SetParent(transform);
-            musicSource = musicObj.AddComponent<AudioSource>();
-            musicSource.loop = true;
-            musicSource.playOnAwake = false;
-        }
+        GameObject musicObj = new GameObject("MusicSource");
+        musicObj.transform.SetParent(transform);
+        musicSource = musicObj.AddComponent<AudioSource>();
+        musicSource.loop = true;
+        musicSource.playOnAwake = false;
+        musicSource.spatialBlend = 0f;
         
-        if (ambienceSource == null)
-        {
-            GameObject ambienceObj = new GameObject("AmbienceSource");
-            ambienceObj.transform.SetParent(transform);
-            ambienceSource = ambienceObj.AddComponent<AudioSource>();
-            ambienceSource.loop = true;
-            ambienceSource.playOnAwake = false;
-        }
-        
-        if (sfxSourcePrefab == null)
-        {
-            GameObject sfxPrefabObj = new GameObject("SFXSourcePrefab");
-            sfxPrefabObj.transform.SetParent(transform);
-            sfxSourcePrefab = sfxPrefabObj.AddComponent<AudioSource>();
-            sfxSourcePrefab.playOnAwake = false;
-            sfxSourcePrefab.loop = false;
-        }
+        GameObject npcAmbienceObj = new GameObject("NPCAmbienceSource");
+        npcAmbienceObj.transform.SetParent(transform);
+        npcAmbienceSource = npcAmbienceObj.AddComponent<AudioSource>();
+        npcAmbienceSource.loop = false;
+        npcAmbienceSource.playOnAwake = false;
+        npcAmbienceSource.spatialBlend = 0f;
     }
 
     private void InitializeSFXPool()
@@ -98,18 +98,43 @@ public class AudioManager : MonoBehaviour
             musicSource.Play();
         }
     }
-
-    private void PlayAmbience()
+    
+    private void ScheduleNextNPCScream()
     {
-        if (ambienceSource != null && crowdScreamingClip != null)
+        nextNPCScreamTime = Time.time + npcScreamInterval + Random.Range(-npcScreamVariance, npcScreamVariance);
+    }
+    
+    private void Update()
+    {
+        for (int i = activeSfxSources.Count - 1; i >= 0; i--)
         {
-            ambienceSource.clip = crowdScreamingClip;
-            ambienceSource.volume = ambienceVolume;
-            ambienceSource.Play();
+            if (!activeSfxSources[i].isPlaying)
+            {
+                activeSfxSources[i].gameObject.SetActive(false);
+                sfxPool.Enqueue(activeSfxSources[i]);
+                activeSfxSources.RemoveAt(i);
+            }
+        }
+        
+        if (Time.time >= nextNPCScreamTime)
+        {
+            PlayNPCScream();
+            ScheduleNextNPCScream();
         }
     }
     
-    public void PlayMusic(AudioClip clip, float volume = 0.6f)
+    private void PlayNPCScream()
+    {
+        if (npcScreamingClip != null && npcAmbienceSource != null)
+        {
+            npcAmbienceSource.clip = npcScreamingClip;
+            npcAmbienceSource.volume = npcAmbienceVolume;
+            npcAmbienceSource.pitch = Random.Range(0.9f, 1.1f);
+            npcAmbienceSource.Play();
+        }
+    }
+    
+    public void PlayMusic(AudioClip clip, float volume = 0.54f)
     {
         if (musicSource == null || clip == null) return;
         
@@ -121,18 +146,6 @@ public class AudioManager : MonoBehaviour
         }
     }
     
-    public void PlayAmbience(AudioClip clip, float volume = 0.4f)
-    {
-        if (ambienceSource == null || clip == null) return;
-        
-        ambienceSource.clip = clip;
-        ambienceSource.volume = volume;
-        if (!ambienceSource.isPlaying)
-        {
-            ambienceSource.Play();
-        }
-    }
-    
     public void StopMusic()
     {
         if (musicSource != null && musicSource.isPlaying)
@@ -141,11 +154,51 @@ public class AudioManager : MonoBehaviour
         }
     }
     
-    public void StopAmbience()
+    public void PlayRollAttack(Vector3 position)
     {
-        if (ambienceSource != null && ambienceSource.isPlaying)
+        if (rollAttackSound != null)
         {
-            ambienceSource.Stop();
+            PlaySFXAtPoint(rollAttackSound, position, attackSoundVolume, Random.Range(0.95f, 1.05f));
+        }
+    }
+    
+    public void PlayJumpAttack(Vector3 position)
+    {
+        if (jumpAttackSound != null)
+        {
+            PlaySFXAtPoint(jumpAttackSound, position, attackSoundVolume, Random.Range(0.95f, 1.05f));
+        }
+    }
+    
+    public void PlaySlashAttack(Vector3 position)
+    {
+        if (slashAttackSound != null)
+        {
+            PlaySFXAtPoint(slashAttackSound, position, attackSoundVolume, Random.Range(0.9f, 1.1f));
+        }
+    }
+    
+    public void PlayChompAttack(Vector3 position)
+    {
+        if (chompAttackSound != null)
+        {
+            PlaySFXAtPoint(chompAttackSound, position, attackSoundVolume, Random.Range(0.95f, 1.05f));
+        }
+    }
+    
+    public void PlayFootstep(Vector3 position)
+    {
+        if (footstepSound != null)
+        {
+            PlaySFXAtPoint(footstepSound, position, footstepVolume, Random.Range(0.95f, 1.05f));
+        }
+    }
+    
+    public void PlayLaserEyes(Vector3 position)
+    {
+        if (laserEyesSound != null)
+        {
+            PlaySFXAtPoint(laserEyesSound, position, laserEyesVolume, 1f);
         }
     }
 
@@ -206,30 +259,20 @@ public class AudioManager : MonoBehaviour
         return newSource;
     }
 
-    private void Update()
-    {
-        for (int i = activeSfxSources.Count - 1; i >= 0; i--)
-        {
-            if (!activeSfxSources[i].isPlaying)
-            {
-                activeSfxSources[i].gameObject.SetActive(false);
-                sfxPool.Enqueue(activeSfxSources[i]);
-                activeSfxSources.RemoveAt(i);
-            }
-        }
-    }
-
     public void SetMusicVolume(float volume)
     {
         musicVolume = Mathf.Clamp01(volume);
         if (musicSource != null)
             musicSource.volume = musicVolume;
     }
-
-    public void SetAmbienceVolume(float volume)
+    
+    public void SetNPCAmbienceVolume(float volume)
     {
-        ambienceVolume = Mathf.Clamp01(volume);
-        if (ambienceSource != null)
-            ambienceSource.volume = ambienceVolume;
+        npcAmbienceVolume = Mathf.Clamp01(volume);
+    }
+    
+    public void SetAttackSoundVolume(float volume)
+    {
+        attackSoundVolume = Mathf.Clamp01(volume);
     }
 }

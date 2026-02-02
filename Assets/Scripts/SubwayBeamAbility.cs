@@ -180,6 +180,8 @@ public class SubwayBeamAbility : MonoBehaviour
         float sweepAngle = -coneAngle / 2f;
         float loopSoundInterval = 0.3f;
         float lastLoopTime = 0f;
+        float shakeInterval = 0.1f;
+        float lastShakeTime = 0f;
 
         while (elapsed < beamDuration)
         {
@@ -198,6 +200,12 @@ public class SubwayBeamAbility : MonoBehaviour
             {
                 audioEvents.PlayLaserBeamLoop(transform.position);
                 lastLoopTime = elapsed;
+            }
+            
+            if (CameraShake.Instance != null && elapsed - lastShakeTime >= shakeInterval)
+            {
+                CameraShake.Instance.ShakeBeam();
+                lastShakeTime = elapsed;
             }
 
             yield return null;
@@ -258,17 +266,17 @@ public class SubwayBeamAbility : MonoBehaviour
                 shouldExplode = true;
             }
 
+            BossController boss = hit.collider.GetComponent<BossController>();
+            if (boss != null)
+            {
+                boss.TakeDamage(damagePerSecond * Time.deltaTime * 0.15f);
+                shouldExplode = true;
+            }
+
             PlayerHealth playerHealth = hit.collider.GetComponent<PlayerHealth>();
             if (playerHealth != null)
             {
                 playerHealth.TakeDamage(damagePerSecond * Time.deltaTime * 0.01f);
-                shouldExplode = true;
-            }
-
-            BossController boss = hit.collider.GetComponent<BossController>();
-            if (boss != null && !boss.IsDead())
-            {
-                boss.TakeDamage(damagePerSecond * Time.deltaTime * 0.02f);
                 shouldExplode = true;
             }
 

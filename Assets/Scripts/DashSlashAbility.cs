@@ -3,9 +3,9 @@ using UnityEngine;
 
 public class DashSlashAbility : MonoBehaviour
 {
-    [SerializeField] private float dashDistance = 15f;
+    [SerializeField] private float dashDistance = 25f;
     [SerializeField] private float dashDuration = 0.3f;
-    [SerializeField] private float slashRadius = 8f;
+    [SerializeField] private float slashRadius = 15f;
     [SerializeField] private float slashDamage = 1000f;
 
     [Header("VFX Prefabs")]
@@ -25,8 +25,6 @@ public class DashSlashAbility : MonoBehaviour
 
     public IEnumerator Execute(IAbilityUser user)
     {
-        user.SetAbilityState(true);
-        
         bool isBoss = user is BossController;
         
         if (audioEvents != null)
@@ -84,8 +82,6 @@ public class DashSlashAbility : MonoBehaviour
         {
             TriggerDamage();
         }
-
-        user.SetAbilityState(false);
     }
 
     public void TriggerDamage()
@@ -98,6 +94,11 @@ public class DashSlashAbility : MonoBehaviour
         if (audioEvents != null)
         {
             audioEvents.PlaySlash(spawnPosition, isBoss);
+        }
+        
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeDashSlash();
         }
 
         if (slashVFXPrefab != null)
@@ -132,16 +133,16 @@ public class DashSlashAbility : MonoBehaviour
                     npc.Die(direction * slashDamage);
                 }
                 
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null)
+                {
+                    boss.TakeDamage(slashDamage * 0.15f);
+                }
+                
                 PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(slashDamage * 0.02f);
-                }
-                
-                BossController boss = hit.GetComponent<BossController>();
-                if (boss != null && !boss.IsDead())
-                {
-                    boss.TakeDamage(slashDamage * 0.05f);
                 }
             }
         }

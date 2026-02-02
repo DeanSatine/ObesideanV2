@@ -7,6 +7,8 @@ public class AnimationEventHandler : MonoBehaviour
     private SubwayBeamAbility subwayBeam;
     private ChompAbility chomp;
     private RollAbility roll;
+    private AudioEvents audioEvents;
+    private bool isBoss;
 
     private void Awake()
     {
@@ -15,6 +17,22 @@ public class AnimationEventHandler : MonoBehaviour
         subwayBeam = GetComponent<SubwayBeamAbility>();
         chomp = GetComponent<ChompAbility>();
         roll = GetComponent<RollAbility>();
+        
+        BossController bossController = GetComponent<BossController>();
+        isBoss = bossController != null;
+        
+        if (isBoss && bossController != null)
+        {
+            audioEvents = bossController.GetComponent<BossController>()?.GetAudioEvents();
+        }
+        else
+        {
+            PlayerController playerController = GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                audioEvents = playerController.GetAudioEvents();
+            }
+        }
     }
 
     public void OnDashSlashHit()
@@ -39,5 +57,13 @@ public class AnimationEventHandler : MonoBehaviour
     {
         if (roll != null)
             roll.TriggerDamage();
+    }
+
+    public void OnFootstep()
+    {
+        if (audioEvents != null)
+        {
+            audioEvents.PlayFootstep(transform.position, isBoss);
+        }
     }
 }

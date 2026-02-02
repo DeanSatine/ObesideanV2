@@ -4,9 +4,9 @@ using UnityEngine;
 public class JumpSlamAbility : MonoBehaviour
 {
     [SerializeField] private float jumpHeight = 10f;
-    [SerializeField] private float jumpForwardDistance = 8f;
+    [SerializeField] private float jumpForwardDistance = 15f;
     [SerializeField] private float jumpDuration = 0.8f;
-    [SerializeField] private float shockwaveRadius = 12f;
+    [SerializeField] private float shockwaveRadius = 20f;
     [SerializeField] private float shockwaveForce = 2000f;
     [SerializeField] private float upwardForceMultiplier = 2.5f;
     [SerializeField] private float bounceForce = 3000f;
@@ -77,6 +77,13 @@ public class JumpSlamAbility : MonoBehaviour
             audioEvents.PlayShockwave(transform.position);
         }
         
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeJumpSlam();
+        }
+        
+        GameFeel.OnBossAbility(transform.position, "JumpSlam");
+        
         if (landingVFXPrefab != null)
         {
             GameObject vfx = Instantiate(landingVFXPrefab, transform.position, Quaternion.identity);
@@ -119,16 +126,16 @@ public class JumpSlamAbility : MonoBehaviour
                     npc.Die(direction * shockwaveForce);
                 }
                 
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null)
+                {
+                    boss.TakeDamage(shockwaveForce * 0.15f);
+                }
+                
                 PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(shockwaveForce * 0.01f);
-                }
-                
-                BossController boss = hit.GetComponent<BossController>();
-                if (boss != null && !boss.IsDead())
-                {
-                    boss.TakeDamage(shockwaveForce * 0.025f);
                 }
             }
         }

@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class ChompAbility : MonoBehaviour
 {
-    [SerializeField] private float chompRadius = 5f;
+    [SerializeField] private float chompRadius = 10f;
     [SerializeField] private float damagePerChomp = 300f;
     [SerializeField] private float chompInterval = 0.5f;
     [SerializeField] private Transform mouthPosition;
@@ -40,6 +40,11 @@ public class ChompAbility : MonoBehaviour
             audioEvents.PlayChomp(chompCenter);
         }
         
+        if (CameraShake.Instance != null)
+        {
+            CameraShake.Instance.ShakeChomp();
+        }
+        
         if (chompVFXPrefab != null)
         {
             GameObject vfx = Instantiate(chompVFXPrefab, chompCenter, Quaternion.identity);
@@ -73,16 +78,16 @@ public class ChompAbility : MonoBehaviour
                     npc.Die(direction * damagePerChomp);
                 }
                 
+                BossController boss = hit.GetComponent<BossController>();
+                if (boss != null)
+                {
+                    boss.TakeDamage(damagePerChomp * 0.15f);
+                }
+                
                 PlayerHealth playerHealth = hit.GetComponent<PlayerHealth>();
                 if (playerHealth != null)
                 {
                     playerHealth.TakeDamage(damagePerChomp * 0.05f);
-                }
-                
-                BossController boss = hit.GetComponent<BossController>();
-                if (boss != null && !boss.IsDead())
-                {
-                    boss.TakeDamage(damagePerChomp * 0.1f);
                 }
             }
         }

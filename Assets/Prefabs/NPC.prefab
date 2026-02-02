@@ -140,6 +140,10 @@ MonoBehaviour:
   bounciness: 5
   spinTorqueMultiplier: 500
   npcMass: 50
+  projectilePrefab: {fileID: 7871751875189619378, guid: 72b49b40562c86b4ba740de1173c7128, type: 3}
+  shootInterval: 2
+  shootRange: 30
+  projectileSpeed: 15
 --- !u!1001 &451533684016505796
 PrefabInstance:
   m_ObjectHideFlags: 0

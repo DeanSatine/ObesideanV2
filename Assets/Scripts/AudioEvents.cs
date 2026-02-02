@@ -57,10 +57,6 @@ public class AudioEvents : ScriptableObject
     
     public void PlayAmbience()
     {
-        if (ambienceClip != null && AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlayAmbience(ambienceClip);
-        }
     }
 
     public void PlayFootstep(Vector3 position, bool isBoss = false)

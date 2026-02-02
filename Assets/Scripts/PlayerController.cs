@@ -20,12 +20,11 @@ public class PlayerController : MonoBehaviour, IAbilityUser
     [SerializeField] private CameraShake cameraShake;
 
     [Header("Ability Cooldowns")]
-    [SerializeField] private float dashSlashCooldown = 3f;
+    [SerializeField] private float dashSlashCooldown = 0.5f;
     [SerializeField] private float jumpSlamCooldown = 5f;
     [SerializeField] private float subwayBeamCooldown = 8f;
     [SerializeField] private float rollCooldown = 2f;
     [SerializeField] private float chompCooldown = 1f;
-    [SerializeField] private float doubleJumpWindow = 0.3f;
 
     [Header("Ability References")]
     [SerializeField] private DashSlashAbility dashSlash;
@@ -51,9 +50,7 @@ public class PlayerController : MonoBehaviour, IAbilityUser
     private float lastSubwayBeamTime = -999f;
     private float lastRollTime = -999f;
     private float lastChompTime = -999f;
-    private float firstJumpPressTime = -999f;
     private float lastFootstepTime = -999f;
-    private int jumpPressCount;
 
     private bool isLeftMousePressed;
     private bool isRightMousePressed;
@@ -119,7 +116,7 @@ public class PlayerController : MonoBehaviour, IAbilityUser
         leftClickAction.canceled += ctx => 
         {
             isLeftMousePressed = false;
-            if (leftMouseHoldTime < 0.5f && !isPerformingAbility)
+            if (leftMouseHoldTime < 0.5f)
             {
                 TryDashSlash();
             }
@@ -131,21 +128,7 @@ public class PlayerController : MonoBehaviour, IAbilityUser
 
         jumpAction.performed += ctx => 
         {
-            if (Time.time - firstJumpPressTime <= doubleJumpWindow)
-            {
-                jumpPressCount++;
-                if (jumpPressCount >= 2)
-                {
-                    TryJumpSlam();
-                    jumpPressCount = 0;
-                    firstJumpPressTime = -999f;
-                }
-            }
-            else
-            {
-                jumpPressCount = 1;
-                firstJumpPressTime = Time.time;
-            }
+            TryJumpSlam();
         };
 
         rollAction.performed += ctx => 
@@ -188,7 +171,7 @@ public class PlayerController : MonoBehaviour, IAbilityUser
 
     private void TryDashSlash()
     {
-        if (Time.time - lastDashTime >= dashSlashCooldown && !isPerformingAbility && dashSlash != null)
+        if (Time.time - lastDashTime >= dashSlashCooldown && dashSlash != null)
         {
             lastDashTime = Time.time;
             if (animator != null)
@@ -364,6 +347,13 @@ public class PlayerController : MonoBehaviour, IAbilityUser
         {
             cameraShake.ShakeFootstep();
         }
+        
+        if (audioEvents != null)
+        {
+            audioEvents.PlayFootstep(transform.position, false);
+        }
     }
+    
     public Animator GetAnimator() => animator;
+    public AudioEvents GetAudioEvents() => audioEvents;
 }

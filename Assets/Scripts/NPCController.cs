@@ -19,17 +19,26 @@ public class NPCController : MonoBehaviour
     [SerializeField] private float bounciness = 0.9f;
     [SerializeField] private float spinTorqueMultiplier = 500f;
     [SerializeField] private float npcMass = 50f;
+    
+    [Header("Shooting")]
+    [SerializeField] private GameObject projectilePrefab;
+    [SerializeField] private float shootInterval = 1.5f;
+    [SerializeField] private float shootRange = 40f;
+    [SerializeField] private float projectileSpeed = 50f;
 
     private Vector3 startPosition;
     private Vector3 targetPosition;
     private float bobOffset;
     private float directionTimer;
     private float bounceTimer;
+    private float shootTimer;
     private bool isDead = false;
     private Rigidbody rb;
     private Collider col;
     private MeshRenderer meshRenderer;
     private Material materialInstance;
+    private Transform playerTarget;
+    private Transform bossTarget;
 
     private void Awake()
     {
@@ -37,10 +46,27 @@ public class NPCController : MonoBehaviour
         bobOffset = Random.Range(0f, Mathf.PI * 2f);
         directionTimer = Random.Range(0f, directionChangeInterval);
         bounceTimer = Random.Range(0f, bounceInterval);
+        shootTimer = Random.Range(0f, shootInterval);
         
+        FindTargets();
         ApplyRandomColor();
         ChooseNewTarget();
         SetupPhysics();
+    }
+    
+    private void FindTargets()
+    {
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerTarget = player.transform;
+        }
+        
+        GameObject boss = GameObject.FindGameObjectWithTag("Boss");
+        if (boss != null)
+        {
+            bossTarget = boss.transform;
+        }
     }
 
     private void SetupPhysics()
@@ -101,6 +127,13 @@ public class NPCController : MonoBehaviour
             bounceTimer = bounceInterval;
             DoRandomBounce();
         }
+        
+        shootTimer -= Time.deltaTime;
+        if (shootTimer <= 0f && projectilePrefab != null)
+        {
+            shootTimer = shootInterval;
+            TryShoot();
+        }
 
         Vector3 directionToTarget = targetPosition - transform.position;
         directionToTarget.y = 0;
@@ -116,6 +149,46 @@ public class NPCController : MonoBehaviour
         if (rb.linearVelocity.magnitude > moveSpeed * 2f)
         {
             rb.linearVelocity = rb.linearVelocity.normalized * moveSpeed * 2f;
+        }
+    }
+    
+    private void TryShoot()
+    {
+        Transform target = null;
+        float closestDistance = shootRange;
+        Vector3 targetPoint = Vector3.zero;
+        
+        if (playerTarget != null)
+        {
+            float distanceToPlayer = Vector3.Distance(transform.position, playerTarget.position);
+            if (distanceToPlayer < closestDistance)
+            {
+                target = playerTarget;
+                closestDistance = distanceToPlayer;
+                targetPoint = playerTarget.position + Vector3.up * 1f;
+            }
+        }
+        
+        if (bossTarget != null)
+        {
+            float distanceToBoss = Vector3.Distance(transform.position, bossTarget.position);
+            if (distanceToBoss < closestDistance)
+            {
+                target = bossTarget;
+                targetPoint = bossTarget.position + Vector3.up * 15f;
+            }
+        }
+        
+        if (target != null)
+        {
+            Vector3 shootDirection = (targetPoint - (transform.position + Vector3.up * 0.5f)).normalized;
+            GameObject projectile = Instantiate(projectilePrefab, transform.position + Vector3.up * 0.5f, Quaternion.identity);
+            
+            NPCProjectile projectileScript = projectile.GetComponent<NPCProjectile>();
+            if (projectileScript != null)
+            {
+                projectileScript.Launch(shootDirection, projectileSpeed);
+            }
         }
     }
 
@@ -144,6 +217,8 @@ public class NPCController : MonoBehaviour
         if (isDead) return;
 
         isDead = true;
+        
+        GameFeel.OnEnemyKilled(transform.position);
 
         if (deathVFXPrefab != null)
         {
